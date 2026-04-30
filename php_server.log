@@ -1,0 +1,15 @@
+[Wed Apr 29 22:09:14 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Wed Apr 29 22:09:45 2026] [::1]:57266 Accepted
+[Wed Apr 29 22:09:45 2026] PHP Warning:  require_once(/app/admin/../config/config.php): Failed to open stream: No such file or directory in /app/admin/login.php on line 7
+[Wed Apr 29 22:09:45 2026] PHP Fatal error:  Uncaught Error: Failed opening required '/app/admin/../config/config.php' (include_path='.:/usr/share/php') in /app/admin/login.php:7
+Stack trace:
+#0 {main}
+  thrown in /app/admin/login.php on line 7
+[Wed Apr 29 22:09:45 2026] [::1]:57266 [500]: GET /admin/login.php - Uncaught Error: Failed opening required '/app/admin/../config/config.php' (include_path='.:/usr/share/php') in /app/admin/login.php:7
+Stack trace:
+#0 {main}
+  thrown in /app/admin/login.php on line 7
+[Wed Apr 29 22:09:45 2026] [::1]:57266 Closing
+[Wed Apr 29 22:09:46 2026] [::1]:57278 Accepted
+[Wed Apr 29 22:09:46 2026] [::1]:57278 [200]: GET /install/index.php
+[Wed Apr 29 22:09:46 2026] [::1]:57278 Closing

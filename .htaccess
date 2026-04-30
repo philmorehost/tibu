@@ -1,0 +1,21 @@
+Options -MultiViews
+RewriteEngine On
+
+# SEO Category Permalink: /category/slug
+RewriteRule ^category/([^/]+)/?$ category.php?slug=$1 [L,QSA]
+
+# CMS Page Permalink: /p/slug
+RewriteRule ^p/([^/]+)/?$ page.php?slug=$1 [L,QSA]
+
+# Blog Permalink: /blog/slug
+RewriteRule ^blog/([^/]+)/?$ blog_view.php?slug=$1 [L,QSA]
+
+# SEO Ad Permalink: /location/category/productname-id
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([^/]+)/([^/]+)/([a-zA-Z0-9-]+)-([0-9]+)/?$ ad.php?id=$4 [L,QSA]
+
+# Hide .php extension (Catch-all for other pages)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.php -f
+RewriteRule ^([^\.]+)$ $1.php [NC,L]
