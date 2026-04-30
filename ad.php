@@ -132,6 +132,19 @@ include __DIR__ . '/templates/header.php';
                                 <span class="bg-gray-100 text-gray-500 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2"><i class="fas fa-clock text-blue-500"></i> <?php echo date('d M, Y', strtotime($ad['created_at'])); ?></span>
 
                                 <?php
+                                $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
+                                if ($tier_info):
+                                ?>
+                                <div class="flex items-center gap-2 <?php echo $tier_info['bg']; ?> px-4 py-2 rounded-xl border border-white/20 shadow-sm relative overflow-hidden">
+                                    <?php if ($tier_info['shimmer'] ?? false): ?>
+                                        <div class="absolute inset-0 shimmer-effect pointer-events-none opacity-50"></div>
+                                    <?php endif; ?>
+                                    <i class="fas fa-gem text-white text-xs"></i>
+                                    <span class="text-[10px] font-black text-white uppercase tracking-widest relative z-10"><?php echo $tier_info['label']; ?> Listing</span>
+                                </div>
+                                <?php endif; ?>
+
+                                <?php
                                 $color = $safety_score >= 80 ? "green" : ($safety_score >= 50 ? "yellow" : "red");
                                 $icon = $safety_score >= 80 ? "fa-shield-alt" : "fa-exclamation-circle";
                                 ?>

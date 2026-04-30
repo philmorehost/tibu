@@ -22,7 +22,8 @@ $tables = [
         'safety_score' => "INT DEFAULT 50 AFTER status",
         'video_url' => "VARCHAR(255) DEFAULT NULL",
         'expires_at' => "TIMESTAMP NULL DEFAULT NULL",
-        'bumped_at' => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+        'bumped_at' => "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+        'ad_tier' => "ENUM('free', 'premium', 'vip', 'diamond') DEFAULT 'free' AFTER is_featured"
     ],
     'users' => [
         'business_name' => "VARCHAR(200) DEFAULT NULL AFTER full_name",
@@ -192,6 +193,37 @@ $missing_tables = [
 
 foreach ($missing_tables as $sql) {
     try { $pdo->exec($sql); } catch (Exception $e) {}
+}
+
+// Data Migration: is_featured to ad_tier
+try {
+    // Check if column exists first to avoid errors during initial run
+    $stmt = $pdo->query("SHOW COLUMNS FROM ads LIKE 'ad_tier'");
+    if ($stmt->fetch()) {
+        $pdo->exec("UPDATE ads SET ad_tier = 'premium' WHERE is_featured = 1 AND (ad_tier IS NULL OR ad_tier = 'free')");
+    }
+} catch (Exception $e) {}
+
+// Settings Migration & Defaults
+$default_settings = [
+    'google_login_active' => '0',
+    'facebook_login_active' => '0',
+    'vip_ad_duration' => '60',
+    'diamond_ad_duration' => '90',
+    'vip_ad_price' => '10000',
+    'diamond_ad_price' => '20000'
+];
+
+// Rename boost_price to premium_ad_price if it exists
+try {
+    $pdo->exec("UPDATE settings SET setting_key = 'premium_ad_price' WHERE setting_key = 'boost_price'");
+} catch (Exception $e) {}
+
+foreach ($default_settings as $key => $val) {
+    try {
+        $stmt = $pdo->prepare("INSERT IGNORE INTO settings (setting_key, setting_value) VALUES (?, ?)");
+        $stmt->execute([$key, $val]);
+    } catch (Exception $e) {}
 }
 
 $_SESSION['schema_verified'] = true;

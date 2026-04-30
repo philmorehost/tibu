@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS ads (
     status ENUM('pending', 'active', 'declined', 'sold', 'swapped', 'expired', 'moderation') DEFAULT 'pending',
     safety_score INT DEFAULT 50,
     is_featured TINYINT(1) DEFAULT 0,
+    ad_tier ENUM('free', 'premium', 'vip', 'diamond') DEFAULT 'free',
     views INT DEFAULT 0,
     decline_reason TEXT,
     expires_at TIMESTAMP NULL DEFAULT NULL,

@@ -106,9 +106,21 @@ include __DIR__ . '/../templates/admin_header.php';
                 <h3 class="font-bold text-lg mb-4 text-primary-700">Ad Boosting & Payments</h3>
                 <div class="space-y-4">
                     <div class="p-4 bg-primary-50 rounded border border-primary-200 mb-4">
-                        <label class="block text-sm font-bold text-primary-800 mb-2">Boost Ad Price (₦)</label>
-                        <input type="number" name="s[boost_price]" value="<?php echo h($settings['boost_price'] ?? '2000'); ?>" class="w-full p-2 border rounded font-bold text-primary-700" step="0.01">
-                        <p class="text-[10px] text-primary-600 mt-1 uppercase font-bold tracking-widest">Amount users pay to feature their ads</p>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-primary-800 mb-2">Premium Ad Price (₦)</label>
+                                <input type="number" name="s[premium_ad_price]" value="<?php echo h($settings['premium_ad_price'] ?? ($settings['boost_price'] ?? '2000')); ?>" class="w-full p-2 border rounded font-bold text-primary-700" step="0.01">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-primary-800 mb-2">VIP Ad Price (₦)</label>
+                                <input type="number" name="s[vip_ad_price]" value="<?php echo h($settings['vip_ad_price'] ?? '10000'); ?>" class="w-full p-2 border rounded font-bold text-primary-700" step="0.01">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-primary-800 mb-2">Diamond Ad Price (₦)</label>
+                                <input type="number" name="s[diamond_ad_price]" value="<?php echo h($settings['diamond_ad_price'] ?? '20000'); ?>" class="w-full p-2 border rounded font-bold text-primary-700" step="0.01">
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-primary-600 mt-2 uppercase font-bold tracking-widest">Amount users pay to boost their ads to different tiers</p>
                     </div>
 
                     <div class="p-4 bg-purple-50 rounded border border-purple-200 mb-4">
@@ -121,6 +133,14 @@ include __DIR__ . '/../templates/admin_header.php';
                             <div>
                                 <label class="block text-xs font-bold text-purple-600 mb-1">Premium Ad (Days)</label>
                                 <input type="number" name="s[premium_ad_duration]" value="<?php echo h($settings['premium_ad_duration'] ?? '30'); ?>" class="w-full p-2 border rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-purple-600 mb-1">VIP Ad (Days)</label>
+                                <input type="number" name="s[vip_ad_duration]" value="<?php echo h($settings['vip_ad_duration'] ?? '60'); ?>" class="w-full p-2 border rounded text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-purple-600 mb-1">Diamond Ad (Days)</label>
+                                <input type="number" name="s[diamond_ad_duration]" value="<?php echo h($settings['diamond_ad_duration'] ?? '90'); ?>" class="w-full p-2 border rounded text-sm">
                             </div>
                         </div>
                     </div>
@@ -176,10 +196,17 @@ include __DIR__ . '/../templates/admin_header.php';
                 <h3 class="font-bold text-lg mt-8 mb-4 text-primary-700">Social Login (OAuth)</h3>
                 <div class="space-y-6">
                     <div class="p-4 bg-red-50 rounded border border-red-200">
-                        <p class="text-sm text-red-800 font-bold mb-3 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9V5a1 1 0 112 0v4a1 1 0 11-2 0zm1 4a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>
-                            Google Login Configuration
-                        </p>
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-sm text-red-800 font-bold flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 9V5a1 1 0 112 0v4a1 1 0 11-2 0zm1 4a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd"></path></svg>
+                                Google Login Configuration
+                            </p>
+                            <label class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-xs font-bold text-red-700 uppercase">Active</span>
+                                <input type="hidden" name="s[google_login_active]" value="0">
+                                <input type="checkbox" name="s[google_login_active]" value="1" <?php echo ($settings['google_login_active'] ?? '0') == '1' ? 'checked' : ''; ?> class="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500">
+                            </label>
+                        </div>
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-bold text-gray-600">Client ID</label>
@@ -197,10 +224,17 @@ include __DIR__ . '/../templates/admin_header.php';
                     </div>
 
                     <div class="p-4 bg-blue-50 rounded border border-blue-200">
-                        <p class="text-sm text-blue-800 font-bold mb-3 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.001 8.001 0 0117.748 8H12V2.252z"></path></svg>
-                            Facebook Login Configuration
-                        </p>
+                        <div class="flex justify-between items-center mb-3">
+                            <p class="text-sm text-blue-800 font-bold mb-3 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z"></path><path d="M12 2.252A8.001 8.001 0 0117.748 8H12V2.252z"></path></svg>
+                                Facebook Login Configuration
+                            </p>
+                            <label class="flex items-center cursor-pointer">
+                                <span class="mr-2 text-xs font-bold text-blue-700 uppercase">Active</span>
+                                <input type="hidden" name="s[facebook_login_active]" value="0">
+                                <input type="checkbox" name="s[facebook_login_active]" value="1" <?php echo ($settings['facebook_login_active'] ?? '0') == '1' ? 'checked' : ''; ?> class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            </label>
+                        </div>
                         <div class="space-y-3">
                             <div>
                                 <label class="block text-xs font-bold text-gray-600">App ID</label>

@@ -104,6 +104,21 @@ if (isset($pdo)) {
             opacity: 0.3;
             z-index: 1;
         }
+
+        /* Ad Tiers Styling */
+        .tier-premium-border { border: 2px solid #38a9f8; }
+        .tier-vip-border { border: 2px solid #facc15; }
+        .tier-diamond-border { border: 2px solid #22d3ee; }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer-effect {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
     </style>
 
     <!-- Open Graph / WhatsApp Integration (Feature 10) -->

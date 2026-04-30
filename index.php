@@ -31,14 +31,18 @@ $categories = $stmt->fetchAll();
 $stmt = $pdo->query("SELECT * FROM categories WHERE is_top = 1 ORDER BY sort_order ASC LIMIT 4");
 $top_grid_categories = $stmt->fetchAll();
 
-// Fetch featured ads
+// Fetch featured ads (Premium, VIP, Diamond)
 $stmt = $pdo->query("SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id = a.id AND is_main = 1 LIMIT 1) as image, s.name as state_name, c.name as cat_name
                      FROM ads a
                      JOIN states s ON a.state_id = s.id
                      JOIN categories c ON a.cat_id = c.id
                      JOIN users u ON a.user_id = u.id
-                     WHERE a.status = 'active' AND a.is_featured = 1 AND u.is_suspended = 0
-                     ORDER BY a.created_at DESC LIMIT 8");
+                     WHERE a.status = 'active' AND (a.is_featured = 1 OR a.ad_tier IN ('premium', 'vip', 'diamond')) AND u.is_suspended = 0
+                     ORDER BY CASE a.ad_tier
+                                WHEN 'diamond' THEN 1
+                                WHEN 'vip' THEN 2
+                                WHEN 'premium' THEN 3
+                                ELSE 4 END ASC, a.created_at DESC LIMIT 8");
 $featured_ads = $stmt->fetchAll();
 
 // Fetch regular ads
@@ -47,7 +51,7 @@ $stmt = $pdo->query("SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id =
                      JOIN states s ON a.state_id = s.id
                      JOIN categories c ON a.cat_id = c.id
                      JOIN users u ON a.user_id = u.id
-                     WHERE a.status = 'active' AND a.is_featured = 0 AND u.is_suspended = 0
+                     WHERE a.status = 'active' AND (a.is_featured = 0 AND (a.ad_tier = 'free' OR a.ad_tier IS NULL)) AND u.is_suspended = 0
                      ORDER BY a.created_at DESC LIMIT 20");
 $recent_ads = $stmt->fetchAll();
 
@@ -198,14 +202,19 @@ include __DIR__ . '/templates/header.php';
                     <a href="/search.php" class="text-[10px] md:text-xs font-black text-primary-600 uppercase tracking-widest hover:text-primary-700 transition">View All Listings</a>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    <?php foreach ($featured_ads as $ad): ?>
-                    <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition">
+                    <?php foreach ($featured_ads as $ad):
+                        $tier_info = get_tier_info($ad['ad_tier'] ?? 'premium');
+                    ?>
+                    <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition <?php echo $tier_info['border'] ?? ''; ?> relative">
+                        <?php if ($tier_info['shimmer'] ?? false): ?>
+                            <div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>
+                        <?php endif; ?>
                         <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
                         <div class="relative h-40 fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
                             <img src="<?php echo $ad_img; ?>">
-                            <span class="absolute top-2 left-2 bg-yellow-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase z-10">Featured</span>
+                            <span class="absolute top-2 left-2 <?php echo $tier_info['badge'] ?? 'bg-yellow-500'; ?> text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase z-10"><?php echo $tier_info['label'] ?? 'Featured'; ?></span>
                             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                                <span class="absolute top-2 right-2 bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase shadow-sm"><i class="fas fa-sync-alt mr-1"></i> Swap</span>
+                                <span class="absolute top-2 right-2 bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase shadow-sm z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</span>
                             <?php endif; ?>
                         </div>
                         <div class="p-3">

@@ -125,7 +125,11 @@ if ($extra) {
     }
 }
 
-$query .= " ORDER BY a.is_featured DESC, a.bumped_at DESC";
+$query .= " ORDER BY CASE a.ad_tier
+            WHEN 'diamond' THEN 1
+            WHEN 'vip' THEN 2
+            WHEN 'premium' THEN 3
+            ELSE 4 END ASC, a.is_featured DESC, a.bumped_at DESC";
 
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
@@ -273,16 +277,23 @@ include __DIR__ . '/templates/header.php';
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                <?php foreach ($ads as $ad): ?>
-                <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group">
+                <?php foreach ($ads as $ad):
+                    $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
+                ?>
+                <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative <?php echo $tier_info['border'] ?? ''; ?>">
+                    <?php if ($tier_info['shimmer'] ?? false): ?>
+                        <div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>
+                    <?php endif; ?>
                     <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
                     <div class="relative h-40 md:h-48 overflow-hidden fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
                         <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
-                        <?php if ($ad['is_featured']): ?>
-                            <div class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-yellow-300">Premium</div>
+                        <?php if ($tier_info): ?>
+                            <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
+                        <?php elseif ($ad['is_featured']): ?>
+                            <div class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-yellow-300 z-10">Premium</div>
                         <?php endif; ?>
                         <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                            <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                            <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
                         <?php endif; ?>
                         <div class="absolute bottom-4 left-4">
                             <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase"><?php echo h($ad['cat_name']); ?></span>

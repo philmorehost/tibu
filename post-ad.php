@@ -51,13 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $ad_data = json_encode($_POST['extra']);
         }
 
-        // Get free ad duration
-        $stmt = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'free_ad_duration'");
-        $duration = (int)($stmt->fetchColumn() ?: 15);
+        // Ad Tiers & Durations
+        $tier = $_POST['ad_tier'] ?? 'free';
+        $duration_key = $tier . '_ad_duration';
+        $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
+        $stmt->execute([$duration_key]);
+        $duration = (int)($stmt->fetchColumn() ?: ($tier === 'free' ? 15 : 30));
         $expires_at = date('Y-m-d H:i:s', strtotime("+$duration days"));
 
-        $stmt = $pdo->prepare("INSERT INTO ads (user_id, cat_id, state_id, lga_id, title, price, listing_type, estimated_value, swap_preference, allow_cash_topup, description, ad_data, status, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)");
-        $stmt->execute([$user_id, $cat_id, $state_id, $lga_id, $title, $price, $listing_type, $estimated_value, $swap_preference, $allow_cash_topup, $description, $ad_data, $expires_at]);
+        $stmt = $pdo->prepare("INSERT INTO ads (user_id, cat_id, state_id, lga_id, title, price, listing_type, estimated_value, swap_preference, allow_cash_topup, description, ad_data, status, expires_at, ad_tier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)");
+        $stmt->execute([$user_id, $cat_id, $state_id, $lga_id, $title, $price, $listing_type, $estimated_value, $swap_preference, $allow_cash_topup, $description, $ad_data, $expires_at, $tier]);
         $ad_id = $pdo->lastInsertId();
 
         if ($property_role) {
@@ -82,6 +85,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $stmt->execute([$ad_id, $filename, $is_main]);
                 }
             }
+        }
+
+        if ($tier !== 'free') {
+            // Redirect to payment if not free
+            redirect("boost.php?ad_id=$ad_id&tier=$tier", "Ad saved! Please complete payment to activate your " . ucfirst($tier) . " package.");
         }
 
         redirect('profile.php', 'Ad posted successfully! It will be live after moderation.');
@@ -227,6 +235,30 @@ include __DIR__ . '/templates/header.php';
 
             <div id="imagePreviewContainer" class="grid grid-cols-5 gap-4 mb-6 hidden">
                 <!-- Previews -->
+            </div>
+
+            <div class="p-6 bg-primary-50 rounded-2xl border border-primary-100 mb-6">
+                <label class="block text-primary-800 font-black mb-4 text-xs uppercase tracking-widest">Select Ad Package</label>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <?php
+                    $tiers = [
+                        'free' => ['label' => 'Free', 'price' => 0, 'color' => 'gray'],
+                        'premium' => ['label' => 'Premium', 'price' => $settings['premium_ad_price'] ?? ($settings['boost_price'] ?? 2000), 'color' => 'blue'],
+                        'vip' => ['label' => 'VIP', 'price' => $settings['vip_ad_price'] ?? 10000, 'color' => 'yellow'],
+                        'diamond' => ['label' => 'Diamond', 'price' => $settings['diamond_ad_price'] ?? 20000, 'color' => 'cyan']
+                    ];
+                    foreach ($tiers as $key => $t):
+                        $dur_key = $key . '_ad_duration';
+                        $dur = $settings[$dur_key] ?? ($key === 'free' ? 15 : 30);
+                    ?>
+                    <label class="relative flex flex-col p-4 bg-white rounded-xl border-2 border-transparent cursor-pointer hover:border-<?php echo $t['color']; ?>-200 has-[:checked]:border-<?php echo $t['color']; ?>-600 has-[:checked]:bg-<?php echo $t['color']; ?>-50 transition">
+                        <input type="radio" name="ad_tier" value="<?php echo $key; ?>" <?php echo $key === 'free' ? 'checked' : ''; ?> class="absolute opacity-0">
+                        <span class="text-xs font-black text-gray-800"><?php echo $t['label']; ?></span>
+                        <span class="text-[10px] font-bold text-<?php echo $t['color']; ?>-600 mt-1">₦<?php echo number_format($t['price']); ?></span>
+                        <span class="text-[9px] text-gray-400 mt-1"><?php echo $dur; ?> Days Visibility</span>
+                    </label>
+                    <?php endforeach; ?>
+                </div>
             </div>
 
             <div class="pt-6">

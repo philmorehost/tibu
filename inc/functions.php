@@ -256,6 +256,19 @@ function apply_site_watermark($resource, $seller_info = "") {
 /**
  * Calculate Deal Safety Score (Feature 08)
  */
+function get_tier_info($tier) {
+    switch ($tier) {
+        case 'diamond':
+            return ['label' => 'Diamond', 'color' => 'purple-600', 'bg' => 'bg-cyan-500', 'badge' => 'bg-cyan-500', 'border' => 'tier-diamond-border', 'shimmer' => true];
+        case 'vip':
+            return ['label' => 'VIP', 'color' => 'yellow-600', 'bg' => 'bg-yellow-400', 'badge' => 'bg-yellow-400', 'border' => 'tier-vip-border', 'shimmer' => false];
+        case 'premium':
+            return ['label' => 'Premium', 'color' => 'blue-600', 'bg' => 'bg-blue-500', 'badge' => 'bg-blue-500', 'border' => 'tier-premium-border', 'shimmer' => false];
+        default:
+            return null;
+    }
+}
+
 function calculate_safety_score($user, $ad) {
     $score = 0;
     if (($user['verification_tier'] ?? '') === 'nin_verified' || ($user['verification_tier'] ?? '') === 'business_verified') {

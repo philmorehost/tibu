@@ -22,12 +22,16 @@ if (isset($_GET['ad_id'])) {
 }
 
 // Get settings
-$stmt = $pdo->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('paystack_public_key', 'flutterwave_public_key', 'boost_price', 'bank_name', 'account_number', 'account_name')");
+$stmt = $pdo->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('paystack_public_key', 'flutterwave_public_key', 'premium_ad_price', 'boost_price', 'vip_ad_price', 'diamond_ad_price', 'bank_name', 'account_number', 'account_name')");
 $settings = [];
 while ($row = $stmt->fetch()) {
     $settings[$row['setting_key']] = $row['setting_value'];
 }
-$boost_price = (float)($settings['boost_price'] ?? 2000);
+
+$tier = $_GET['tier'] ?? 'premium';
+if (!in_array($tier, ['premium', 'vip', 'diamond'])) $tier = 'premium';
+$price_key = $tier . '_ad_price';
+$boost_price = (float)($settings[$price_key] ?? ($settings['boost_price'] ?? 2000));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bank_transfer'])) {
     $filename = process_image_upload($_FILES['proof']['tmp_name'], __DIR__ . '/uploads/proofs', 800);
@@ -45,7 +49,26 @@ include __DIR__ . '/templates/header.php';
 <div class="container mx-auto px-4 py-10 flex justify-center">
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-xl">
         <h1 class="text-2xl font-bold mb-8 text-primary-600 border-b pb-4"><i class="fas fa-rocket mr-2"></i> Boost Your Ad</h1>
-        <p class="mb-8 font-bold text-gray-700">Get 10x more views for <span class="text-primary-600">"<?php echo h($ad['title']); ?>"</span> by upgrading to a <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Premium Boost</span>.</p>
+
+        <!-- Tier Selection -->
+        <div class="grid grid-cols-3 gap-2 mb-8">
+            <?php
+            $available_tiers = [
+                'premium' => ['label' => 'Premium', 'color' => 'blue'],
+                'vip' => ['label' => 'VIP', 'color' => 'yellow'],
+                'diamond' => ['label' => 'Diamond', 'color' => 'cyan']
+            ];
+            foreach ($available_tiers as $key => $t):
+                $t_price = (float)($settings[$key . '_ad_price'] ?? ($key === 'premium' ? ($settings['boost_price'] ?? 2000) : 0));
+            ?>
+                <a href="?ad_id=<?php echo $ad_id; ?>&tier=<?php echo $key; ?>" class="p-3 rounded-xl border-2 text-center transition <?php echo $tier === $key ? "border-{$t['color']}-600 bg-{$t['color']}-50" : "border-gray-100 hover:border-gray-200 bg-white"; ?>">
+                    <p class="text-[10px] font-black uppercase text-gray-800"><?php echo $t['label']; ?></p>
+                    <p class="text-[9px] font-bold text-<?php echo $t['color']; ?>-600">₦<?php echo number_format($t_price); ?></p>
+                </a>
+            <?php endforeach; ?>
+        </div>
+
+        <p class="mb-8 font-bold text-gray-700">Upgrade <span class="text-primary-600">"<?php echo h($ad['title']); ?>"</span> to <span class="bg-<?php echo $available_tiers[$tier]['color']; ?>-100 text-<?php echo $available_tiers[$tier]['color']; ?>-800 px-2 py-1 rounded"><?php echo ucfirst($tier); ?></span> for maximum visibility.</p>
 
         <div class="space-y-6">
             <!-- Online Payment -->
@@ -91,7 +114,7 @@ function payWithPaystack() {
         amount: <?php echo ($boost_price * 100); ?>, // In kobo
         currency: 'NGN',
         callback: function(response) {
-            window.location.href = 'api/payment_verify.php?method=paystack&ref=' + response.reference + '&ad_id=<?php echo $ad_id; ?>';
+            window.location.href = 'api/payment_verify.php?method=paystack&ref=' + response.reference + '&ad_id=<?php echo $ad_id; ?>&tier=<?php echo $tier; ?>';
         }
     });
     handler.openIframe();
@@ -105,7 +128,7 @@ function payWithFlutterwave() {
         currency: 'NGN',
         payment_options: 'card, banktransfer, ussd',
         callback: function (data) {
-            window.location.href = 'api/payment_verify.php?method=flutterwave&ref=' + data.transaction_id + '&ad_id=<?php echo $ad_id; ?>';
+            window.location.href = 'api/payment_verify.php?method=flutterwave&ref=' + data.transaction_id + '&ad_id=<?php echo $ad_id; ?>&tier=<?php echo $tier; ?>';
         }
     });
 }

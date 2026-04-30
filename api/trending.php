@@ -16,7 +16,7 @@ $query = "SELECT a.*,
          JOIN states s ON a.state_id = s.id
          JOIN categories c ON a.cat_id = c.id
          JOIN users u ON a.user_id = u.id
-         WHERE a.status = 'active' AND a.is_featured = 0 AND u.is_suspended = 0";
+         WHERE a.status = 'active' AND (a.is_featured = 0 AND (a.ad_tier = 'free' OR a.ad_tier IS NULL)) AND u.is_suspended = 0";
 
 if ($cat_id > 0) {
     $query .= " AND a.cat_id = $cat_id";
