@@ -4,21 +4,24 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../inc/functions.php';
 require_once __DIR__ . '/../inc/user_auth.php';
 
-// Fetch global settings for site name, etc.
-if (isset($pdo)) {
-    $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
-    $settings = [];
-    while ($row = $stmt->fetch()) {
-        $settings[$row['setting_key']] = $row['setting_value'];
-    }
-}
-
 // Global IP Blacklist/Country Check
 if (isset($pdo)) {
-    require_once __DIR__ . '/../inc/security.php';
-
-    // Run migrations to ensure schema is up to date
+    // Run migrations to ensure schema is up to date BEFORE anything else
     require_once __DIR__ . '/../inc/update_schema.php';
+    require_once __DIR__ . '/../inc/security.php';
+}
+
+// Fetch global settings for site name, etc.
+if (isset($pdo)) {
+    try {
+        $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
+        $settings = [];
+        while ($row = $stmt->fetch()) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+    } catch (Exception $e) {
+        $settings = [];
+    }
 }
 ?>
 <!DOCTYPE html>
