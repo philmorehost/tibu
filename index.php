@@ -37,7 +37,7 @@ $stmt = $pdo->query("SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id =
                      JOIN states s ON a.state_id = s.id
                      JOIN categories c ON a.cat_id = c.id
                      JOIN users u ON a.user_id = u.id
-                     WHERE a.status = 'active' AND (a.is_featured = 1 OR a.ad_tier IN ('premium', 'vip', 'diamond')) AND u.is_suspended = 0
+                     WHERE a.status = 'active' AND a.ad_tier IN ('premium', 'vip', 'diamond') AND u.is_suspended = 0
                      ORDER BY CASE a.ad_tier
                                 WHEN 'diamond' THEN 1
                                 WHEN 'vip' THEN 2
@@ -51,7 +51,7 @@ $stmt = $pdo->query("SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id =
                      JOIN states s ON a.state_id = s.id
                      JOIN categories c ON a.cat_id = c.id
                      JOIN users u ON a.user_id = u.id
-                     WHERE a.status = 'active' AND (a.is_featured = 0 AND (a.ad_tier = 'free' OR a.ad_tier IS NULL)) AND u.is_suspended = 0
+                     WHERE a.status = 'active' AND (a.ad_tier = 'free' OR a.ad_tier IS NULL) AND u.is_suspended = 0
                      ORDER BY a.created_at DESC LIMIT 20");
 $recent_ads = $stmt->fetchAll();
 
@@ -490,7 +490,7 @@ function filterTrending(catId, type = 'all') {
                 <a href="${ad.url}" class="bg-white rounded-2xl md:rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group">
                     <div class="h-48 md:h-64 overflow-hidden relative fit-to-frame" style="--bg-image: url('${ad.image ? '/uploads/ads/'+ad.image : 'https://placehold.co/400x300?text=No+Image'}')">
                         <img src="${ad.image ? '/uploads/ads/'+ad.image : 'https://placehold.co/400x300?text=No+Image'}" class="group-hover:scale-110 transition duration-700">
-                        ${ad.is_featured == 1 ? '<div class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-yellow-300 z-10">Premium</div>' : ''}
+                        ${ad.ad_tier !== 'free' ? '<div class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-yellow-300 z-10">Premium</div>' : ''}
                         ${ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>' : ''}
                     </div>
                     <div class="p-4 md:p-6">

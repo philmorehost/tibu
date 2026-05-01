@@ -129,7 +129,7 @@ $query .= " ORDER BY CASE a.ad_tier
             WHEN 'diamond' THEN 1
             WHEN 'vip' THEN 2
             WHEN 'premium' THEN 3
-            ELSE 4 END ASC, a.is_featured DESC, a.bumped_at DESC";
+            ELSE 4 END ASC, a.bumped_at DESC";
 
 $stmt = $pdo->prepare($query);
 $stmt->execute($params);
@@ -289,8 +289,6 @@ include __DIR__ . '/templates/header.php';
                         <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
                         <?php if ($tier_info): ?>
                             <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
-                        <?php elseif ($ad['is_featured']): ?>
-                            <div class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-yellow-300 z-10">Premium</div>
                         <?php endif; ?>
                         <?php if ($ad['listing_type'] !== 'for_sale'): ?>
                             <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>

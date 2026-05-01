@@ -9,8 +9,13 @@ if (!isset($pdo)) {
 }
 if (!isset($pdo)) return;
 
-// Simple guard to prevent running on every page load after first successful run in a session
-if (isset($_SESSION['schema_verified'])) return;
+// Guard: Only run if the 'ads' table doesn't exist or is missing the 'ad_tier' column
+try {
+    $stmt = $pdo->query("SHOW COLUMNS FROM ads LIKE 'ad_tier'");
+    if ($stmt->fetch()) return;
+} catch (Exception $e) {
+    // ads table likely doesn't exist, proceed with migration
+}
 
 $tables = [
     'ads' => [
@@ -369,4 +374,4 @@ try {
     }
 } catch (Exception $e) {}
 
-$_SESSION['schema_verified'] = true;
+error_log("Schema sync completed successfully.");

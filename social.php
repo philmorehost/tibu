@@ -13,8 +13,8 @@ if (!in_array($provider, ['google', 'facebook'])) {
 }
 
 // Get settings
-$stmt = $pdo->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN (?, ?)");
-$stmt->execute([$provider . '_login_active', 'site_name']);
+$stmt = $pdo->prepare("SELECT setting_key, setting_value FROM settings WHERE setting_key IN (?, ?, ?, ?)");
+$stmt->execute([$provider . '_login_active', $provider . '_client_id', $provider . '_app_id', 'site_name']);
 $settings = [];
 while ($row = $stmt->fetch()) {
     $settings[$row['setting_key']] = $row['setting_value'];
@@ -22,6 +22,11 @@ while ($row = $stmt->fetch()) {
 
 if (($settings[$provider . '_login_active'] ?? '0') !== '1') {
     redirect('login.php', ucfirst($provider) . " login is currently disabled.", 'error');
+}
+
+$client_id = $settings[$provider . '_client_id'] ?? ($settings[$provider . '_app_id'] ?? '');
+if (empty($client_id)) {
+    redirect('login.php', ucfirst($provider) . " login is not fully configured in admin panel.", 'error');
 }
 
 // Indicate that real OAuth logic should be implemented.

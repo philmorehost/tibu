@@ -197,3 +197,15 @@ if (isset($pdo)) {
         <p class="text-[10px] md:text-xs font-black uppercase tracking-[2px]"><?php echo h($settings['site_name'] ?? 'Classifieds'); ?> Verified Sellers have completed NIN + live identity verification. Always look for the <span class="text-yellow-400">Verified Badge</span>.</p>
     </div>
 </div>
+
+<?php if (isset($_SESSION['flash'])): ?>
+<div class="container mx-auto px-4 mt-6">
+    <div class="<?php echo $_SESSION['flash']['type'] === 'error' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-green-100 text-green-700 border-green-200'; ?> p-4 rounded-xl border-2 font-bold text-sm flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <i class="fas <?php echo $_SESSION['flash']['type'] === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'; ?>"></i>
+            <?php echo h($_SESSION['flash']['message']); ?>
+        </div>
+        <button onclick="this.parentElement.remove()" class="opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+<?php unset($_SESSION['flash']); endif; ?>
