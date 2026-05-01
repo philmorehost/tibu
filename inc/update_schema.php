@@ -32,7 +32,11 @@ $tables = [
         'kyc_reference' => "VARCHAR(100) DEFAULT NULL AFTER nin_number",
         'last_verified_at' => "DATETIME DEFAULT NULL AFTER kyc_reference",
         'verification_fails' => "INT DEFAULT 0 AFTER last_verified_at",
-        'locked_until' => "DATETIME DEFAULT NULL AFTER verification_fails"
+        'locked_until' => "DATETIME DEFAULT NULL AFTER verification_fails",
+        'website_url' => "VARCHAR(255) DEFAULT NULL",
+        'instagram_url' => "VARCHAR(255) DEFAULT NULL",
+        'twitter_url' => "VARCHAR(255) DEFAULT NULL",
+        'cashback_balance' => "DECIMAL(15, 2) DEFAULT 0"
     ],
     'categories' => [
         'is_top' => "TINYINT(1) DEFAULT 0",
@@ -41,7 +45,8 @@ $tables = [
     ],
     'payments' => [
         'reject_reason' => "TEXT DEFAULT NULL",
-        'proof_image' => "VARCHAR(255) DEFAULT NULL"
+        'proof_image' => "VARCHAR(255) DEFAULT NULL",
+        'ad_tier' => "VARCHAR(20) DEFAULT NULL"
     ],
     'reviews' => [
         'reply_text' => "TEXT DEFAULT NULL AFTER body",
@@ -288,6 +293,27 @@ $missing_tables = [
         cat_id INT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )",
+    "CREATE TABLE IF NOT EXISTS packages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        tier ENUM('free', 'premium', 'vip', 'diamond') UNIQUE NOT NULL,
+        name VARCHAR(50) NOT NULL,
+        price DECIMAL(15, 2) DEFAULT 0,
+        duration_days INT DEFAULT 30,
+        cashback DECIMAL(15, 2) DEFAULT 0,
+        power_up VARCHAR(50) DEFAULT '1x',
+        listings_cars INT DEFAULT 0,
+        listings_property INT DEFAULT 0,
+        listings_others INT DEFAULT 0,
+        promo_ads_count INT DEFAULT 0,
+        auto_renew_hours INT DEFAULT 0,
+        has_social_links TINYINT(1) DEFAULT 0,
+        has_personal_manager TINYINT(1) DEFAULT 0,
+        has_insights_report TINYINT(1) DEFAULT 0,
+        has_feedback_tool TINYINT(1) DEFAULT 0,
+        has_pro_sales TINYINT(1) DEFAULT 0,
+        has_email_promo TINYINT(1) DEFAULT 0,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     )"
 ];
 
@@ -325,5 +351,22 @@ foreach ($default_settings as $key => $val) {
         $stmt->execute([$key, $val]);
     } catch (Exception $e) {}
 }
+
+// Seed Packages Table
+try {
+    $stmt = $pdo->query("SELECT COUNT(*) FROM packages");
+    if ($stmt->fetchColumn() == 0) {
+        $packages = [
+            ['free', 'Free', 0, 15, 0, '1x', 1, 1, 10, 0, 0, 0, 0, 0, 0, 0, 0],
+            ['premium', 'Premium', 49999, 30, 38500, '5x', 15, 5, 50, 5, 24, 0, 0, 0, 0, 1, 0],
+            ['vip', 'VIP', 71999, 30, 55500, '7x', 30, 10, 100, 10, 12, 0, 0, 0, 0, 1, 0],
+            ['diamond', 'Diamond Gold', 123499, 30, 95100, '20x', 70, 999999, 500, 20, 3, 1, 1, 1, 1, 1, 1]
+        ];
+        $insert = $pdo->prepare("INSERT INTO packages (tier, name, price, duration_days, cashback, power_up, listings_cars, listings_property, listings_others, promo_ads_count, auto_renew_hours, has_social_links, has_personal_manager, has_insights_report, has_feedback_tool, has_pro_sales, has_email_promo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        foreach ($packages as $pkg) {
+            $insert->execute($pkg);
+        }
+    }
+} catch (Exception $e) {}
 
 $_SESSION['schema_verified'] = true;

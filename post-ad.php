@@ -14,11 +14,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$user_id]);
         $user_tier = $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare("SELECT COUNT(*) FROM ads WHERE user_id = ?");
-        $stmt->execute([$user_id]);
-        $post_count = $stmt->fetchColumn();
+        // Get user's active package limits
+        $stmt_limits = $pdo->prepare("SELECT p.* FROM packages p
+                                     JOIN ads a ON p.tier = a.ad_tier
+                                     WHERE a.user_id = ? AND a.status = 'active' AND a.expires_at > NOW()
+                                     ORDER BY p.price DESC LIMIT 1");
+        $stmt_limits->execute([$user_id]);
+        $active_pkg = $stmt_limits->fetch() ?: ['tier' => 'free', 'listings_cars' => 1, 'listings_property' => 1, 'listings_others' => 10];
 
-        if ($user_tier === "phone_verified" && $post_count >= 20) {
+        $cat_id = (int)$_POST['cat_id'] ?: null;
+        $parent_cat_id = (int)$_POST['parent_cat_id'] ?: null;
+
+        // Fetch parent category name to check specific limits
+        $stmt_pcat = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
+        $stmt_pcat->execute([$parent_cat_id]);
+        $pcat_name = strtoupper($stmt_pcat->fetchColumn() ?: '');
+
+        $limit_col = 'listings_others';
+        if (strpos($pcat_name, 'CAR') !== false || strpos($pcat_name, 'VEHICLE') !== false) {
+            $limit_col = 'listings_cars';
+        } elseif (strpos($pcat_name, 'PROPERTY') !== false || strpos($pcat_name, 'REAL ESTATE') !== false) {
+            $limit_col = 'listings_property';
+        }
+
+        $allowed_limit = (int)($active_pkg[$limit_col] ?? 0);
+
+        // Count existing ads in this "meta-category"
+        $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM ads a
+                                    JOIN categories c ON a.cat_id = c.id
+                                    WHERE a.user_id = ? AND a.status = 'active'
+                                    AND (c.id = ? OR c.parent_id = ?)");
+        $stmt_count->execute([$user_id, $parent_cat_id, $parent_cat_id]);
+        $current_meta_count = $stmt_count->fetchColumn();
+
+        if ($current_meta_count >= $allowed_limit) {
+            throw new Exception("You have reached the limit of $allowed_limit ads for " . ($limit_col === 'listings_others' ? 'this category' : ucfirst(str_replace('listings_', '', $limit_col))) . " under your current " . ucfirst($active_pkg['tier']) . " package. Upgrade your package to post more.");
+        }
+
+        if ($active_pkg['tier'] === 'free' && $user_tier === "phone_verified" && $post_count >= 20) {
             throw new Exception("You have reached the limit of 20 free listings for Phone Verified accounts. Complete NIN verification to unlock unlimited postings.");
         }
 
@@ -36,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             throw new Exception("This listing appears to be a duplicate of another item you have already posted. Please check your inventory.");
         }
 
-        $cat_id = (int)$_POST['cat_id'] ?: null;
         $state_id = (int)$_POST['state_id'] ?: null;
         $lga_id = (int)$_POST['lga_id'] ?: null;
         $price = (float)$_POST['price'];
@@ -53,10 +85,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Ad Tiers & Durations
         $tier = $_POST['ad_tier'] ?? 'free';
-        $duration_key = $tier . '_ad_duration';
-        $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
-        $stmt->execute([$duration_key]);
-        $duration = (int)($stmt->fetchColumn() ?: ($tier === 'free' ? 15 : 30));
+        $stmt_pkg = $pdo->prepare("SELECT duration_days FROM packages WHERE tier = ?");
+        $stmt_pkg->execute([$tier]);
+        $duration = (int)($stmt_pkg->fetchColumn() ?: ($tier === 'free' ? 15 : 30));
         $expires_at = date('Y-m-d H:i:s', strtotime("+$duration days"));
 
         $stmt = $pdo->prepare("INSERT INTO ads (user_id, cat_id, state_id, lga_id, title, price, listing_type, estimated_value, swap_preference, allow_cash_topup, description, ad_data, status, expires_at, ad_tier) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)");
@@ -117,7 +148,7 @@ include __DIR__ . '/templates/header.php';
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-gray-700 font-bold mb-2 text-sm">Category</label>
-                    <select id="parent_cat_id" class="w-full p-3 border rounded-lg focus:border-primary-500 outline-none" required onchange="loadSubcategories(this.value)">
+                    <select name="parent_cat_id" id="parent_cat_id" class="w-full p-3 border rounded-lg focus:border-primary-500 outline-none" required onchange="loadSubcategories(this.value)">
                         <option value="">Select Category</option>
                         <?php foreach ($categories as $cat): ?>
                             <option value="<?php echo $cat['id']; ?>"><?php echo h($cat['name']); ?></option>
@@ -241,21 +272,16 @@ include __DIR__ . '/templates/header.php';
                 <label class="block text-primary-800 font-black mb-4 text-xs uppercase tracking-widest">Select Ad Package</label>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <?php
-                    $tiers = [
-                        'free' => ['label' => 'Free', 'price' => 0, 'color' => 'gray'],
-                        'premium' => ['label' => 'Premium', 'price' => $settings['premium_ad_price'] ?? ($settings['boost_price'] ?? 2000), 'color' => 'blue'],
-                        'vip' => ['label' => 'VIP', 'price' => $settings['vip_ad_price'] ?? 10000, 'color' => 'yellow'],
-                        'diamond' => ['label' => 'Diamond', 'price' => $settings['diamond_ad_price'] ?? 20000, 'color' => 'cyan']
-                    ];
-                    foreach ($tiers as $key => $t):
-                        $dur_key = $key . '_ad_duration';
-                        $dur = $settings[$dur_key] ?? ($key === 'free' ? 15 : 30);
+                    $packages = $pdo->query("SELECT * FROM packages ORDER BY price ASC")->fetchAll();
+                    $colors = ['free' => 'gray', 'premium' => 'blue', 'vip' => 'yellow', 'diamond' => 'cyan'];
+                    foreach ($packages as $p):
+                        $color = $colors[$p['tier']] ?? 'primary';
                     ?>
-                    <label class="relative flex flex-col p-4 bg-white rounded-xl border-2 border-transparent cursor-pointer hover:border-<?php echo $t['color']; ?>-200 has-[:checked]:border-<?php echo $t['color']; ?>-600 has-[:checked]:bg-<?php echo $t['color']; ?>-50 transition">
-                        <input type="radio" name="ad_tier" value="<?php echo $key; ?>" <?php echo $key === 'free' ? 'checked' : ''; ?> class="absolute opacity-0">
-                        <span class="text-xs font-black text-gray-800"><?php echo $t['label']; ?></span>
-                        <span class="text-[10px] font-bold text-<?php echo $t['color']; ?>-600 mt-1">₦<?php echo number_format($t['price']); ?></span>
-                        <span class="text-[9px] text-gray-400 mt-1"><?php echo $dur; ?> Days Visibility</span>
+                    <label class="relative flex flex-col p-4 bg-white rounded-xl border-2 border-transparent cursor-pointer hover:border-<?php echo $color; ?>-200 has-[:checked]:border-<?php echo $color; ?>-600 has-[:checked]:bg-<?php echo $color; ?>-50 transition">
+                        <input type="radio" name="ad_tier" value="<?php echo $p['tier']; ?>" <?php echo $p['tier'] === 'free' ? 'checked' : ''; ?> class="absolute opacity-0">
+                        <span class="text-xs font-black text-gray-800"><?php echo h($p['name']); ?></span>
+                        <span class="text-[10px] font-bold text-<?php echo $color; ?>-600 mt-1">₦<?php echo number_format($p['price']); ?></span>
+                        <span class="text-[9px] text-gray-400 mt-1"><?php echo $p['duration_days']; ?> Days Visibility</span>
                     </label>
                     <?php endforeach; ?>
                 </div>

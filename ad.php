@@ -9,7 +9,7 @@ if (!isset($_GET['id'])) {
 }
 
 $id = (int)$_GET['id'];
-$stmt = $pdo->prepare("SELECT a.*, u.full_name as seller_name, u.phone as seller_phone, u.is_verified, u.verification_tier, u.created_at as seller_created_at, c.name as cat_name, s.name as state_name, l.name as lga_name
+$stmt = $pdo->prepare("SELECT a.*, u.full_name as seller_name, u.phone as seller_phone, u.website_url, u.instagram_url, u.twitter_url, u.is_verified, u.verification_tier, u.created_at as seller_created_at, c.name as cat_name, s.name as state_name, l.name as lga_name
                      FROM ads a
                      JOIN users u ON a.user_id = u.id
                      JOIN categories c ON a.cat_id = c.id
@@ -143,6 +143,12 @@ include __DIR__ . '/templates/header.php';
                                     <span class="text-[10px] font-black text-white uppercase tracking-widest relative z-10"><?php echo $tier_info['label']; ?> Listing</span>
                                 </div>
                                 <?php endif; ?>
+
+                                <?php
+                                $stmt_pkg = $pdo->prepare("SELECT has_social_links FROM packages WHERE tier = ?");
+                                $stmt_pkg->execute([$ad['ad_tier'] ?? 'free']);
+                                $pkg_features = $stmt_pkg->fetch();
+                                ?>
 
                                 <?php
                                 $color = $safety_score >= 80 ? "green" : ($safety_score >= 50 ? "yellow" : "red");
@@ -294,6 +300,23 @@ include __DIR__ . '/templates/header.php';
                 </div>
 
                 <div class="mt-10 border-t border-gray-50 pt-8">
+                    <?php if ($pkg_features['has_social_links'] ?? false): ?>
+                        <?php if (!empty($ad['website_url']) || !empty($ad['instagram_url']) || !empty($ad['twitter_url'])): ?>
+                        <p class="text-[10px] font-black text-gray-400 uppercase mb-6 tracking-[3px] text-center">Visit Seller</p>
+                        <div class="flex justify-center gap-4 mb-10">
+                            <?php if (!empty($ad['website_url'])): ?>
+                                <a href="<?php echo h($ad['website_url']); ?>" target="_blank" class="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-primary-600 hover:text-white transition-all shadow-sm"><i class="fas fa-globe"></i></a>
+                            <?php endif; ?>
+                            <?php if (!empty($ad['instagram_url'])): ?>
+                                <a href="<?php echo h($ad['instagram_url']); ?>" target="_blank" class="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-pink-600 hover:text-white transition-all shadow-sm"><i class="fab fa-instagram"></i></a>
+                            <?php endif; ?>
+                            <?php if (!empty($ad['twitter_url'])): ?>
+                                <a href="<?php echo h($ad['twitter_url']); ?>" target="_blank" class="w-12 h-12 rounded-2xl bg-gray-50 text-gray-400 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-sm"><i class="fab fa-twitter"></i></a>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
                     <p class="text-[10px] font-black text-gray-400 uppercase mb-6 tracking-[3px] text-center">Share this ad</p>
                     <div class="flex justify-center gap-4">
                         <a href="https://api.whatsapp.com/send?text=<?php echo urlencode($ad["title"] . " - ₦" . number_format($ad["price"]) . ". View on " . ($settings['site_name'] ?? 'Classifieds') . ": ") . (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] === "on" ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>" target="_blank" class="w-12 h-12 rounded-2xl bg-primary-50 text-primary-600 flex items-center justify-center hover:bg-primary-600 hover:text-white transition-all shadow-sm">

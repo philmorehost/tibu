@@ -13,10 +13,31 @@ if (isset($_GET['action']) && isset($_GET['id'])) {
         $stmt->execute([$id]);
 
         // Boost the associated ad
-        $stmt = $pdo->prepare("SELECT ad_id FROM payments WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT ad_id, ad_tier FROM payments WHERE id = ?");
         $stmt->execute([$id]);
-        $ad_id = $stmt->fetchColumn();
-        $pdo->prepare("UPDATE ads SET is_featured = 1 WHERE id = ?")->execute([$ad_id]);
+        $pay = $stmt->fetch();
+        $ad_id = $pay['ad_id'];
+        $tier = $pay['ad_tier'] ?? 'premium';
+
+        $stmt_pkg = $pdo->prepare("SELECT duration_days, cashback FROM packages WHERE tier = ?");
+        $stmt_pkg->execute([$tier]);
+        $pkg = $stmt_pkg->fetch();
+        $duration = (int)($pkg['duration_days'] ?? 30);
+        $cashback = (float)($pkg['cashback'] ?? 0);
+        $new_expiry = date('Y-m-d H:i:s', strtotime("+$duration days"));
+
+        $pdo->prepare("UPDATE ads SET ad_tier = ?, is_featured = 1, status = 'active', expires_at = ?, bumped_at = CURRENT_TIMESTAMP WHERE id = ?")
+            ->execute([$tier, $new_expiry, $ad_id]);
+
+        // Handle Cashback
+        if ($cashback > 0) {
+            $stmt_uid = $pdo->prepare("SELECT user_id FROM ads WHERE id = ?");
+            $stmt_uid->execute([$ad_id]);
+            $uid = $stmt_uid->fetchColumn();
+            if ($uid) {
+                $pdo->prepare("UPDATE users SET cashback_balance = cashback_balance + ? WHERE id = ?")->execute([$cashback, $uid]);
+            }
+        }
 
         redirect('payments.php', 'Payment approved and ad boosted.');
     } elseif ($action == 'decline') {

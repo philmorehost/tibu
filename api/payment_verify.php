@@ -11,27 +11,30 @@ if (isset($_GET['ref']) && isset($_GET['ad_id']) && isset($_GET['method'])) {
 
     // In a real application, we would call Paystack/Flutterwave API to verify the reference
 
-    // Fetch dynamic price for the selected tier
-    $price_key = $tier . '_ad_price';
-    $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
-    $stmt->execute([$price_key]);
-    $price = (float)($stmt->fetchColumn() ?: ($tier === 'premium' ? 2000 : 0));
+    // Fetch dynamic price & duration from packages table (Source of Truth)
+    $stmt = $pdo->prepare("SELECT price, duration_days FROM packages WHERE tier = ?");
+    $stmt->execute([$tier]);
+    $pkg = $stmt->fetch();
 
-    if (!$price) {
-        // Fallback for renamed boost_price
-        $stmt = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'boost_price'");
-        $price = (float)($stmt->fetchColumn() ?: 2000);
-    }
+    $price = (float)($pkg['price'] ?? 0);
+    $duration = (int)($pkg['duration_days'] ?? 30);
 
     // For this clone, we simulate successful verification
-    $stmt = $pdo->prepare("INSERT INTO payments (ad_id, reference, method, amount, status) VALUES (?, ?, ?, ?, 'successful')");
-    $stmt->execute([$ad_id, $ref, $method, $price]);
+    $stmt = $pdo->prepare("INSERT INTO payments (ad_id, reference, method, amount, status, ad_tier) VALUES (?, ?, ?, ?, 'successful', ?)");
+    $stmt->execute([$ad_id, $ref, $method, $price, $tier]);
 
-    // Fetch duration for the selected tier
-    $duration_key = $tier . '_ad_duration';
-    $stmt = $pdo->prepare("SELECT setting_value FROM settings WHERE setting_key = ?");
-    $stmt->execute([$duration_key]);
-    $duration = (int)($stmt->fetchColumn() ?: 30);
+    // Handle Cashback
+    $cashback = (float)($pkg['cashback'] ?? 0);
+    if ($cashback > 0) {
+        // Get user_id from ad
+        $stmt_uid = $pdo->prepare("SELECT user_id FROM ads WHERE id = ?");
+        $stmt_uid->execute([$ad_id]);
+        $uid = $stmt_uid->fetchColumn();
+        if ($uid) {
+            $pdo->prepare("UPDATE users SET cashback_balance = cashback_balance + ? WHERE id = ?")->execute([$cashback, $uid]);
+        }
+    }
+
     $new_expiry = date('Y-m-d H:i:s', strtotime("+$duration days"));
 
     // Boost the ad, extend expiry, set tier, and bump to top

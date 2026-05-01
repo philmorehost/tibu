@@ -180,8 +180,11 @@ include __DIR__ . '/templates/header.php';
                     ?>">
                         <?php echo $ad['status']; ?>
                     </span>
-                    <?php if ($ad['is_featured']): ?>
-                        <span class="absolute top-4 right-4 bg-yellow-400 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md"><i class="fas fa-rocket"></i> BOOSTED</span>
+                    <?php
+                    $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
+                    if ($tier_info):
+                    ?>
+                        <span class="absolute top-4 right-4 <?php echo $tier_info['badge']; ?> text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md"><i class="fas fa-rocket"></i> <?php echo $tier_info['label']; ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="p-5">
@@ -197,7 +200,7 @@ include __DIR__ . '/templates/header.php';
                         <?php endif; ?>
 
                         <div class="flex gap-2">
-                        <?php if (!$ad['is_featured'] && $ad['status'] == 'active'): ?>
+                        <?php if (($ad['ad_tier'] ?? 'free') === 'free' && $ad['status'] == 'active'): ?>
                             <a href="boost.php?ad_id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-primary-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition uppercase shadow-md tracking-wider">
                                 <?php echo ($ad['last_payment_status'] == 'failed') ? 'Retry Boost' : 'Boost Ad'; ?>
                             </a>
