@@ -9,13 +9,6 @@ if (!isset($pdo)) {
 }
 if (!isset($pdo)) return;
 
-// Guard: Only run if the 'ads' table doesn't exist or is missing the 'ad_tier' column
-try {
-    $stmt = $pdo->query("SHOW COLUMNS FROM ads LIKE 'ad_tier'");
-    if ($stmt->fetch()) return;
-} catch (Exception $e) {
-    // ads table likely doesn't exist, proceed with migration
-}
 
 $tables = [
     'ads' => [
@@ -38,6 +31,7 @@ $tables = [
         'last_verified_at' => "DATETIME DEFAULT NULL AFTER kyc_reference",
         'verification_fails' => "INT DEFAULT 0 AFTER last_verified_at",
         'locked_until' => "DATETIME DEFAULT NULL AFTER verification_fails",
+        'is_suspended' => "TINYINT(1) DEFAULT 0",
         'website_url' => "VARCHAR(255) DEFAULT NULL",
         'instagram_url' => "VARCHAR(255) DEFAULT NULL",
         'twitter_url' => "VARCHAR(255) DEFAULT NULL",
@@ -113,6 +107,10 @@ $missing_tables = [
         verification_fails INT DEFAULT 0,
         locked_until DATETIME DEFAULT NULL,
         is_suspended TINYINT(1) DEFAULT 0,
+        website_url VARCHAR(255) DEFAULT NULL,
+        instagram_url VARCHAR(255) DEFAULT NULL,
+        twitter_url VARCHAR(255) DEFAULT NULL,
+        cashback_balance DECIMAL(15, 2) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )",
     "CREATE TABLE IF NOT EXISTS ads (

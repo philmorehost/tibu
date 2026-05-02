@@ -8,3 +8,9 @@
 [Sat May  2 15:36:30 2026] [::1]:57470 Accepted
 [Sat May  2 15:36:30 2026] [::1]:57470 [200]: GET /index.php
 [Sat May  2 15:36:30 2026] [::1]:57470 Closing
+[Sat May  2 16:08:52 2026] [::1]:38204 Accepted
+[Sat May  2 16:08:52 2026] [::1]:38204 [200]: HEAD /api/subcategories.php?parent_id=1
+[Sat May  2 16:08:52 2026] [::1]:38204 Closing
+[Sat May  2 16:09:31 2026] [::1]:55548 Accepted
+[Sat May  2 16:09:31 2026] [::1]:55548 [200]: GET /api/subcategories.php?parent_id=1
+[Sat May  2 16:09:31 2026] [::1]:55548 Closing
