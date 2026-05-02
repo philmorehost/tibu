@@ -50,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($is_top) {
                 $top_count = $pdo->query("SELECT COUNT(*) FROM categories WHERE is_top = 1")->fetchColumn();
-                if ($top_count >= 4) {
-                    $error = "Maximum of 4 categories can be shown in the top grid. Please unstar another category first.";
+                if ($top_count >= 16) {
+                    $error = "Maximum of 16 categories can be shown in the top grid. Please unstar another category first.";
                     $is_top = 0;
                 }
             }
@@ -92,8 +92,8 @@ if (isset($_GET['toggle_top'])) {
 
     if (!$is_now_top) { // Trying to set it to top
         $top_count = $pdo->query("SELECT COUNT(*) FROM categories WHERE is_top = 1")->fetchColumn();
-        if ($top_count >= 4) {
-            header("Location: categories.php?error=" . urlencode("Maximum of 4 categories can be shown in the top grid."));
+        if ($top_count >= 16) {
+            header("Location: categories.php?error=" . urlencode("Maximum of 16 categories can be shown in the top grid."));
             exit;
         }
     }
@@ -129,7 +129,7 @@ include __DIR__ . '/../templates/admin_header.php';
             <div>
                 <?php $top_count = $pdo->query("SELECT COUNT(*) FROM categories WHERE is_top = 1")->fetchColumn(); ?>
                 <p class="text-[10px] font-black text-yellow-700 uppercase tracking-widest">Mobile Grid Slots</p>
-                <p class="text-xl font-black text-yellow-900"><?php echo $top_count; ?> / 4 used</p>
+                <p class="text-xl font-black text-yellow-900"><?php echo $top_count; ?> / 16 used</p>
             </div>
         </div>
     </div>
