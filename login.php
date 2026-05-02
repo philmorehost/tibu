@@ -62,16 +62,55 @@ include __DIR__ . '/templates/header.php';
 
         <?php
         $google_active = ($settings['google_login_active'] ?? '0') == '1';
+        $google_client_id = $settings['google_client_id'] ?? '';
         $facebook_active = ($settings['facebook_login_active'] ?? '0') == '1';
         if ($google_active || $facebook_active):
         ?>
         <div class="mt-8 border-t pt-6">
             <p class="text-center text-gray-500 font-bold text-sm mb-4">OR LOGIN WITH</p>
             <div class="grid grid-cols-<?php echo ($google_active && $facebook_active) ? '2' : '1'; ?> gap-4">
-                <?php if ($google_active): ?>
-                <a href="social.php?provider=google" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
-                    <i class="fab fa-google text-red-500 mr-2"></i> Google
-                </a>
+                <?php if ($google_active && !empty($google_client_id)): ?>
+                <div id="g_id_onload"
+                     data-client_id="<?php echo h($google_client_id); ?>"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
+                <script>
+                function handleGoogleCredentialResponse(response) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'api/google_verify.php');
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            try {
+                                const res = JSON.parse(xhr.responseText);
+                                if (res.success) {
+                                    window.location.href = 'index.php';
+                                } else {
+                                    alert(res.message || 'Login failed');
+                                }
+                            } catch (e) {
+                                alert('Error processing server response');
+                            }
+                        } else {
+                            alert('Google verification failed');
+                        }
+                    };
+                    xhr.send('id_token=' + response.credential);
+                }
+                </script>
+                <?php elseif ($google_active): ?>
+                <div class="text-[10px] text-red-500 text-center font-bold">Google Login Not Configured</div>
                 <?php endif; ?>
                 <?php if ($facebook_active): ?>
                 <a href="social.php?provider=facebook" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">

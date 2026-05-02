@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } else {
                     // Register immediately
-                    $stmt = $pdo->prepare("INSERT INTO users (full_name, email, phone, password, is_verified) VALUES (?, ?, ?, ?, 0)");
+                    $stmt = $pdo->prepare("INSERT INTO users (full_name, email, phone, password, is_verified) VALUES (?, ?, ?, ?, 1)");
                     $stmt->execute([$full_name, $email, $phone, $password_hashed]);
 
                     $_SESSION['user_id'] = $pdo->lastInsertId();
@@ -59,6 +59,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header('Location: index.php');
                     exit;
                 }
+            }
+        }
+    }
+
+    if (isset($_POST['resend_otp'])) {
+        $reg = $_SESSION['reg_data'] ?? null;
+        if ($reg) {
+            $otp = rand(100000, 999999);
+            $_SESSION['reg_data']['otp'] = $otp;
+            $_SESSION['reg_data']['otp_expires'] = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+
+            if (send_otp($reg['email'], $otp)) {
+                $show_otp = true;
+                $flash_success = "Verification code resent!";
+            } else {
+                $error = "Failed to resend OTP. Check SMTP settings.";
             }
         }
     }
@@ -101,7 +117,13 @@ include __DIR__ . '/templates/header.php';
                     <label class="block text-gray-700 font-bold mb-2">Enter 6-Digit OTP</label>
                     <input type="text" name="otp" class="w-full p-4 text-center text-3xl font-bold tracking-[10px] border-2 border-primary-200 rounded-xl focus:border-primary-500 outline-none" placeholder="000000" maxlength="6" required autofocus>
                     <button type="submit" name="verify_otp" class="w-full mt-6 bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 transition shadow-lg uppercase">Verify & Create Account</button>
-                    <p class="mt-4 text-xs text-gray-400">Didn't receive it? <a href="#" class="text-primary-600 font-bold hover:underline">Resend OTP</a></p>
+                    <div class="mt-4 text-xs text-gray-400">
+                        Didn't receive it?
+                        <button type="submit" name="resend_otp" value="1" class="text-primary-600 font-bold hover:underline bg-transparent border-none p-0 cursor-pointer">Resend OTP</button>
+                    </div>
+                    <?php if (isset($flash_success)): ?>
+                        <p class="mt-2 text-xs text-green-600 font-bold"><?php echo h($flash_success); ?></p>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
             <div class="mb-4 text-sm font-bold text-gray-700">
