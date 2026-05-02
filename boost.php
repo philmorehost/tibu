@@ -61,10 +61,19 @@ include __DIR__ . '/templates/header.php';
         <!-- Tier Selection -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <?php
-            $colors = ['premium' => 'blue', 'vip' => 'yellow', 'diamond' => 'cyan'];
+            $colors = ['premium' => 'blue', 'vip' => 'yellow', 'diamond' => 'purple'];
             foreach ($packages as $p):
                 if ($p['tier'] === 'free') continue;
                 $color = $colors[$p['tier']] ?? 'primary';
+                $price_key = $p['tier'] . '_ad_price';
+                $duration_key = $p['tier'] . '_ad_duration';
+                $p_price = isset($settings[$price_key]) ? (float)$settings[$price_key] : (float)$p['price'];
+                $p_duration = isset($settings[$duration_key]) ? (int)$settings[$duration_key] : (int)$p['duration_days'];
+
+                if ($p['tier'] === 'premium') {
+                    $p_price = isset($settings['premium_ad_price']) ? (float)$settings['premium_ad_price'] : (isset($settings['boost_price']) ? (float)$settings['boost_price'] : $p_price);
+                    $p_duration = isset($settings['premium_ad_duration']) ? (int)$settings['premium_ad_duration'] : $p_duration;
+                }
             ?>
                 <div class="flex flex-col border-2 rounded-2xl overflow-hidden transition <?php echo $tier === $p['tier'] ? "border-{$color}-600 shadow-xl" : "border-gray-100 opacity-60 grayscale hover:opacity-100 hover:grayscale-0"; ?>">
                     <div class="p-4 bg-<?php echo $color; ?>-50 border-b flex justify-between items-center">
@@ -74,8 +83,8 @@ include __DIR__ . '/templates/header.php';
 
                     <div class="p-6 flex-1 bg-white">
                         <div class="mb-6">
-                            <p class="text-3xl font-black text-gray-800">₦<?php echo number_format($p['price']); ?></p>
-                            <p class="text-xs font-bold text-gray-400">per <?php echo $p['duration_days'] == 30 ? 'month' : $p['duration_days'] . ' days'; ?></p>
+                            <p class="text-3xl font-black text-gray-800">₦<?php echo number_format($p_price); ?></p>
+                            <p class="text-xs font-bold text-gray-400">per <?php echo $p_duration; ?> days</p>
                         </div>
 
                         <ul class="space-y-3 text-xs font-bold text-gray-600">

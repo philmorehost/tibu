@@ -342,7 +342,8 @@ $default_settings = [
     'vip_ad_duration' => '60',
     'diamond_ad_duration' => '90',
     'vip_ad_price' => '10000',
-    'diamond_ad_price' => '20000'
+    'diamond_ad_price' => '20000',
+    'registration_otp_enabled' => '1'
 ];
 
 // Rename boost_price to premium_ad_price if it exists

@@ -42,6 +42,18 @@ include __DIR__ . '/../templates/admin_header.php';
             <div>
                 <h3 class="font-bold text-lg mb-4 text-primary-700">General Information</h3>
                 <div class="space-y-4">
+                    <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 mb-4">
+                        <h4 class="font-bold text-sm text-gray-700 mb-3 uppercase tracking-widest flex items-center">
+                            <i class="fas fa-shield-alt mr-2 text-primary-600"></i>
+                            Security & Registration
+                        </h4>
+                        <label class="flex items-center cursor-pointer">
+                            <input type="hidden" name="s[registration_otp_enabled]" value="0">
+                            <input type="checkbox" name="s[registration_otp_enabled]" value="1" <?php echo ($settings['registration_otp_enabled'] ?? '1') == '1' ? 'checked' : ''; ?> class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500">
+                            <span class="ml-2 text-sm font-bold text-gray-700">Enable OTP for New Registration</span>
+                        </label>
+                        <p class="text-[10px] text-gray-400 mt-2">When enabled, users must verify their email with a 6-digit code before their account is created.</p>
+                    </div>
                     <div>
                         <label class="block text-gray-700 font-bold mb-2">Site Name</label>
                         <input type="text" name="s[site_name]" value="<?php echo h($settings['site_name'] ?? ''); ?>" class="w-full p-2 border rounded">

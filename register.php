@@ -28,22 +28,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->fetch()) {
                 $error = "Email already registered.";
             } else {
-                $otp = rand(100000, 999999);
-                $otp_expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+                $otp_enabled = ($settings['registration_otp_enabled'] ?? '1') == '1';
+                $password_hashed = password_hash($password, PASSWORD_DEFAULT);
 
-                $_SESSION['reg_data'] = [
-                    'full_name' => $full_name,
-                    'email' => $email,
-                    'phone' => $phone,
-                    'password' => password_hash($password, PASSWORD_DEFAULT),
-                    'otp' => $otp,
-                    'otp_expires' => $otp_expires
-                ];
+                if ($otp_enabled) {
+                    $otp = rand(100000, 999999);
+                    $otp_expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-                if (send_otp($email, $otp)) {
-                    $show_otp = true;
+                    $_SESSION['reg_data'] = [
+                        'full_name' => $full_name,
+                        'email' => $email,
+                        'phone' => $phone,
+                        'password' => $password_hashed,
+                        'otp' => $otp,
+                        'otp_expires' => $otp_expires
+                    ];
+
+                    if (send_otp($email, $otp)) {
+                        $show_otp = true;
+                    } else {
+                        $error = "Failed to send OTP email. Please check your SMTP settings.";
+                    }
                 } else {
-                    $error = "Failed to send OTP email. Please check your SMTP settings.";
+                    // Register immediately
+                    $stmt = $pdo->prepare("INSERT INTO users (full_name, email, phone, password, is_verified) VALUES (?, ?, ?, ?, 0)");
+                    $stmt->execute([$full_name, $email, $phone, $password_hashed]);
+
+                    $_SESSION['user_id'] = $pdo->lastInsertId();
+                    $_SESSION['user_name'] = $full_name;
+                    header('Location: index.php');
+                    exit;
                 }
             }
         }

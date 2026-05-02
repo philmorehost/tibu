@@ -259,11 +259,11 @@ function apply_site_watermark($resource, $seller_info = "") {
 function get_tier_info($tier) {
     switch ($tier) {
         case 'diamond':
-            return ['label' => 'Diamond', 'color' => 'purple-600', 'bg' => 'bg-cyan-500', 'badge' => 'bg-cyan-500', 'border' => 'tier-diamond-border', 'shimmer' => true];
+            return ['label' => 'Diamond', 'color' => 'purple-600', 'bg' => 'bg-purple-600', 'badge' => 'bg-purple-600', 'border' => 'tier-diamond-border', 'shimmer' => true];
         case 'vip':
-            return ['label' => 'VIP', 'color' => 'yellow-600', 'bg' => 'bg-yellow-400', 'badge' => 'bg-yellow-400', 'border' => 'tier-vip-border', 'shimmer' => false];
+            return ['label' => 'VIP', 'color' => 'yellow-600', 'bg' => 'bg-yellow-500', 'badge' => 'bg-yellow-500', 'border' => 'tier-vip-border', 'shimmer' => false];
         case 'premium':
-            return ['label' => 'Premium', 'color' => 'blue-600', 'bg' => 'bg-blue-500', 'badge' => 'bg-blue-500', 'border' => 'tier-premium-border', 'shimmer' => false];
+            return ['label' => 'Premium', 'color' => 'blue-600', 'bg' => 'bg-blue-600', 'badge' => 'bg-blue-600', 'border' => 'tier-premium-border', 'shimmer' => false];
         default:
             return null;
     }

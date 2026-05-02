@@ -109,9 +109,9 @@ if (isset($pdo)) {
         }
 
         /* Ad Tiers Styling */
-        .tier-premium-border { border: 2px solid #38a9f8; }
+        .tier-premium-border { border: 2px solid #0966ce; }
         .tier-vip-border { border: 2px solid #facc15; }
-        .tier-diamond-border { border: 2px solid #22d3ee; }
+        .tier-diamond-border { border: 2px solid #9333ea; }
 
         @keyframes shimmer {
             0% { background-position: -200% 0; }

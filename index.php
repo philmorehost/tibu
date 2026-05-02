@@ -51,8 +51,12 @@ $stmt = $pdo->query("SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id =
                      JOIN states s ON a.state_id = s.id
                      JOIN categories c ON a.cat_id = c.id
                      JOIN users u ON a.user_id = u.id
-                     WHERE a.status = 'active' AND (a.ad_tier = 'free' OR a.ad_tier IS NULL) AND u.is_suspended = 0
-                     ORDER BY a.created_at DESC LIMIT 20");
+                     WHERE a.status = 'active' AND u.is_suspended = 0
+                     ORDER BY CASE a.ad_tier
+                                WHEN 'diamond' THEN 1
+                                WHEN 'vip' THEN 2
+                                WHEN 'premium' THEN 3
+                                ELSE 4 END ASC, a.bumped_at DESC LIMIT 20");
 $recent_ads = $stmt->fetchAll();
 
 include __DIR__ . '/templates/header.php';
@@ -334,13 +338,21 @@ include __DIR__ . '/templates/header.php';
                     <!-- Feed Grid -->
                     <div class="flex-1">
                         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-8" id="trendingContainer">
-                    <?php foreach ($recent_ads as $ad): ?>
-                    <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group">
+                    <?php foreach ($recent_ads as $ad):
+                        $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
+                    ?>
+                    <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative <?php echo $tier_info['border'] ?? ''; ?>">
+                        <?php if ($tier_info['shimmer'] ?? false): ?>
+                            <div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>
+                        <?php endif; ?>
                         <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
                         <div class="h-64 overflow-hidden relative fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
                             <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
+                            <?php if ($tier_info): ?>
+                                <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
+                            <?php endif; ?>
                             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                                <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                                <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
                             <?php endif; ?>
                         </div>
                         <div class="p-6">
@@ -486,11 +498,30 @@ function filterTrending(catId, type = 'all') {
                 container.innerHTML = '<div class="col-span-full py-20 text-center font-bold text-gray-400 uppercase tracking-widest text-sm">No products found for this selection</div>';
                 return;
             }
-            container.innerHTML = data.map(ad => `
-                <a href="${ad.url}" class="bg-white rounded-2xl md:rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group">
+            container.innerHTML = data.map(ad => {
+                const tier = ad.ad_tier || 'free';
+                let badge = '';
+                let border = '';
+                let shimmer = '';
+
+                if (tier === 'diamond') {
+                    badge = '<div class="absolute top-4 left-4 bg-purple-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">Diamond</div>';
+                    border = 'border-2 border-purple-500';
+                    shimmer = '<div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>';
+                } else if (tier === 'vip') {
+                    badge = '<div class="absolute top-4 left-4 bg-yellow-500 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">VIP</div>';
+                    border = 'border-2 border-yellow-400';
+                } else if (tier === 'premium') {
+                    badge = '<div class="absolute top-4 left-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">Premium</div>';
+                    border = 'border-2 border-blue-500';
+                }
+
+                return `
+                <a href="${ad.url}" class="bg-white rounded-2xl md:rounded-[2.5rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative ${border}">
+                    ${shimmer}
                     <div class="h-48 md:h-64 overflow-hidden relative fit-to-frame" style="--bg-image: url('${ad.image ? '/uploads/ads/'+ad.image : 'https://placehold.co/400x300?text=No+Image'}')">
                         <img src="${ad.image ? '/uploads/ads/'+ad.image : 'https://placehold.co/400x300?text=No+Image'}" class="group-hover:scale-110 transition duration-700">
-                        ${ad.ad_tier !== 'free' ? '<div class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-yellow-300 z-10">Premium</div>' : ''}
+                        ${badge}
                         ${ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>' : ''}
                     </div>
                     <div class="p-4 md:p-6">
@@ -506,7 +537,8 @@ function filterTrending(catId, type = 'all') {
                         </div>
                     </div>
                 </a>
-            `).join('');
+                `;
+            }).join('');
         });
 }
 </script>
