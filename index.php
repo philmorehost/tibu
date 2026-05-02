@@ -28,7 +28,7 @@ $stmt = $pdo->query("SELECT c.*,
 $categories = $stmt->fetchAll();
 
 // Fetch Top Grid categories for mobile
-$stmt = $pdo->query("SELECT * FROM categories WHERE is_top = 1 ORDER BY sort_order ASC LIMIT 4");
+$stmt = $pdo->query("SELECT * FROM categories WHERE is_top = 1 ORDER BY sort_order ASC LIMIT 16");
 $top_grid_categories = $stmt->fetchAll();
 
 // Fetch featured ads (Premium, VIP, Diamond)

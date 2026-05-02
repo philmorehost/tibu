@@ -1,7 +1,4 @@
-[Sat May  2 10:51:24 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Sat May  2 10:53:14 2026] [::1]:51632 Accepted
-[Sat May  2 10:53:14 2026] [::1]:51632 [200]: GET /login.php
-[Sat May  2 10:53:14 2026] [::1]:51632 Closing
-[Sat May  2 10:53:14 2026] [::1]:51636 Accepted
-[Sat May  2 10:53:14 2026] [::1]:51636 [200]: GET /register.php
-[Sat May  2 10:53:14 2026] [::1]:51636 Closing
+[Sat May  2 14:33:14 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Sat May  2 14:34:55 2026] [::1]:59534 Accepted
+[Sat May  2 14:34:55 2026] [::1]:59534 [200]: GET /index.php
+[Sat May  2 14:34:55 2026] [::1]:59534 Closing
