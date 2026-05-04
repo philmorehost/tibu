@@ -196,6 +196,10 @@ if (isset($pdo)) {
                         <i class="fas fa-user-plus text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">Registration</span>
                     </a>
+                    <a href="/search.php?type=swap" class="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition items-center justify-center">
+                        <i class="fas fa-sync-alt md:mr-1"></i>
+                        <span class="hidden md:inline">SWAP</span>
+                    </a>
                     <!-- New Post AD Icon for Guest Mobile -->
                     <a href="/post-ad" class="md:hidden text-yellow-500 p-2 flex flex-col items-center">
                         <i class="fas fa-plus-circle text-2xl"></i>

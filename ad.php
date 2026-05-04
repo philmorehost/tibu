@@ -471,11 +471,14 @@ include __DIR__ . '/templates/header.php';
         </div>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
             <?php foreach ($similar_ads as $s_ad): ?>
-            <a href="<?php echo generate_ad_url($s_ad); ?>" class="bg-white rounded-[2rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 group border border-gray-50">
-                <div class="relative h-48 overflow-hidden">
-                    <img src="<?php echo $s_ad['image'] ? '/uploads/ads/'.$s_ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>" class="w-full h-full object-cover group-hover:scale-110 transition duration-700">
+            <a href="<?php echo generate_ad_url($s_ad); ?>" class="bg-white rounded-[2rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 group border border-gray-100 relative">
+                <div class="relative h-48 overflow-hidden fit-to-frame" style="--bg-image: url('<?php echo $s_ad['image'] ? '/uploads/ads/'.$s_ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>')">
+                    <img src="<?php echo $s_ad['image'] ? '/uploads/ads/'.$s_ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>" class="group-hover:scale-110 transition duration-700">
                     <?php if ($s_ad['is_featured']): ?>
-                        <span class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl">Premium</span>
+                        <span class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">Premium</span>
+                    <?php endif; ?>
+                    <?php if (($s_ad['listing_type'] ?? '') !== 'for_sale'): ?>
+                        <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
                     <?php endif; ?>
                 </div>
                 <div class="p-6">
@@ -524,7 +527,12 @@ include __DIR__ . '/templates/header.php';
 
         <div class="space-y-4">
             <a href="/chat.php?ad_id=<?php echo $ad["id"]; ?>" class="block w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest text-center hover:bg-primary-700 transition shadow-xl">Message on <?php echo h($settings['site_name'] ?? 'Classifieds'); ?></a>
-            <button onclick="revealNumber()" class="block w-full bg-gray-50 text-gray-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center hover:bg-gray-100 transition">Show Number Anyway</button>
+            <div id="revealedPhoneContainer" class="hidden">
+                <a href="tel:<?php echo str_replace(' ', '', $ad['seller_phone'] ?? ''); ?>" id="revealedPhoneLink" class="block w-full bg-green-500 text-white py-5 rounded-2xl font-black text-lg text-center hover:bg-green-600 transition shadow-xl mb-4">
+                    <i class="fas fa-phone-alt mr-2"></i> <span id="revealedPhoneNumber"></span>
+                </a>
+            </div>
+            <button id="showNumberBtn" onclick="revealNumber()" class="block w-full bg-gray-50 text-gray-400 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-center hover:bg-gray-100 transition">Show Number Anyway</button>
             <button onclick="closePhoneModal()" class="block w-full text-gray-300 font-black text-[9px] uppercase tracking-widest mt-4">Maybe Later</button>
         </div>
     </div>
@@ -623,10 +631,20 @@ function revealNumber() {
         closePhoneModal();
         return;
     }
-    const telLink = "tel:" + fullPhone.replace(/^0/, "234");
+
+    // Update main page blurred number
     document.getElementById("blurredPhone").textContent = fullPhone;
-    window.location.href = telLink;
-    closePhoneModal();
+
+    // Update modal UI
+    document.getElementById("revealedPhoneNumber").textContent = fullPhone;
+    document.getElementById("revealedPhoneLink").href = "tel:" + fullPhone.replace(/\D/g, '');
+    document.getElementById("revealedPhoneContainer").classList.remove("hidden");
+    document.getElementById("showNumberBtn").classList.add("hidden");
+
+    // Auto-dial attempt if mobile
+    if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        window.location.href = "tel:" + fullPhone.replace(/\D/g, '');
+    }
 }
 </script>
 

@@ -290,6 +290,15 @@ $missing_tables = [
         FOREIGN KEY (ad_id) REFERENCES ads(id) ON DELETE CASCADE,
         UNIQUE KEY (user_id, ad_id)
     )",
+    "CREATE TABLE IF NOT EXISTS messages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sender_id INT NOT NULL,
+        receiver_id INT NOT NULL,
+        ad_id INT NOT NULL,
+        message TEXT NOT NULL,
+        is_read TINYINT(1) DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )",
     "CREATE TABLE IF NOT EXISTS search_history (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,

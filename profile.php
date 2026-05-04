@@ -175,6 +175,9 @@ include __DIR__ . '/templates/header.php';
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 group">
                 <div class="relative aspect-square overflow-hidden rounded-xl">
                     <img src="<?php echo $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>" class="w-full h-full object-cover">
+                    <?php if ($ad['listing_type'] !== 'for_sale'): ?>
+                        <div class="absolute bottom-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                    <?php endif; ?>
                     <span class="absolute top-4 left-4 text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md <?php
                         echo $ad['status'] == 'active' ? 'bg-primary-500 text-white' : ($ad['status'] == 'pending' ? 'bg-yellow-400 text-white' : ($ad['status'] == 'expired' ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'));
                     ?>">
