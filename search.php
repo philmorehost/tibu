@@ -116,7 +116,7 @@ include __DIR__ . '/templates/header.php';
                 <div class="py-2">
                     <?php foreach ($main_categories as $mcat): ?>
                         <div class="px-2">
-                            <a href="search.php?q=<?php echo h($q); ?>&cat_id=<?php echo $mcat['id']; ?>&state_id=<?php echo $state_id; ?>&type=<?php echo $type; ?>"
+                            <a href="/search.php?q=<?php echo h($q); ?>&cat_id=<?php echo $mcat['id']; ?>&state_id=<?php echo $state_id; ?>&type=<?php echo $type; ?>"
                                onclick="event.preventDefault(); switchCategory(<?php echo $mcat['id']; ?>, this)"
                                class="category-nav-link flex items-center justify-between p-3 rounded-lg transition-all <?php echo $mcat['id'] == $cat_id ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'; ?>">
                                 <div class="flex items-center gap-3">
@@ -188,7 +188,7 @@ include __DIR__ . '/templates/header.php';
                     <button type="button" onclick="updateAds()" class="w-full bg-primary-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary-700 transition shadow-lg shadow-primary-100">Apply Filters</button>
 
                     <?php if ($cat_id || $state_id || $min_price || $max_price || $q || $extra): ?>
-                        <a href="search.php" class="block text-center text-[10px] font-black text-red-400 uppercase tracking-widest mt-4 hover:text-red-600 transition">Clear All Filters</a>
+                        <a href="/search.php" class="block text-center text-[10px] font-black text-red-400 uppercase tracking-widest mt-4 hover:text-red-600 transition">Clear All Filters</a>
                     <?php endif; ?>
                 </form>
             </div>
@@ -263,7 +263,7 @@ function renderAds(ads) {
                 </div>
                 <h2 class="text-2xl font-black text-gray-800 mb-2 tracking-tighter">No matching results</h2>
                 <p class="text-gray-400 font-bold">We couldn't find anything matching your search. Try different keywords or filters.</p>
-                <a href="search.php" class="bg-primary-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-primary-700 transition uppercase shadow-2xl inline-block mt-10 tracking-widest text-xs">VIEW ALL LISTINGS</a>
+                <a href="/search.php" class="bg-primary-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-primary-700 transition uppercase shadow-2xl inline-block mt-10 tracking-widest text-xs">VIEW ALL LISTINGS</a>
             </div>`;
         return;
     }

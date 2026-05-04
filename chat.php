@@ -17,7 +17,7 @@ if ($ad_id > 0) {
     $ad = $stmt->fetch();
 
     if (!$ad) {
-        redirect('chat.php', 'Ad not found.', 'error');
+        redirect('/chat.php', 'Ad not found.', 'error');
     }
 
     $receiver_id = $ad['user_id'];
@@ -27,7 +27,7 @@ if ($ad_id > 0) {
         // For simplicity in this v1.2, we assume owner opens chat from inbox with a specific user.
         $other_user_id = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
         if ($other_user_id <= 0) {
-            redirect('chat.php', 'Select a conversation to reply.');
+            redirect('/chat.php', 'Select a conversation to reply.');
         }
         $receiver_id = $other_user_id;
     }
@@ -37,7 +37,7 @@ if ($ad_id > 0) {
         $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, ad_id, message) VALUES (?, ?, ?, ?)");
         $stmt->execute([$user_id, $receiver_id, $ad_id, $message]);
 
-        $redirect_url = "chat.php?ad_id=$ad_id";
+        $redirect_url = "/chat.php?ad_id=$ad_id";
         if (isset($_GET['user_id'])) $redirect_url .= "&user_id=" . (int)$_GET['user_id'];
 
         redirect($redirect_url, 'Message sent.');
@@ -108,7 +108,7 @@ include __DIR__ . '/templates/header.php';
                     $other_uid = ($conv['sender_id'] == $user_id) ? $conv['receiver_id'] : $conv['sender_id'];
                     $is_active = ($ad_id == $conv['ad_id'] && (isset($_GET['user_id']) ? $_GET['user_id'] == $other_uid : true));
                 ?>
-                    <a href="chat.php?ad_id=<?php echo $conv['ad_id']; ?>&user_id=<?php echo $other_uid; ?>" class="block p-5 border-b border-gray-50 hover:bg-primary-50 transition <?php echo $is_active ? 'bg-primary-50 border-l-4 border-l-primary-600' : ''; ?>">
+                    <a href="/chat.php?ad_id=<?php echo $conv['ad_id']; ?>&user_id=<?php echo $other_uid; ?>" class="block p-5 border-b border-gray-50 hover:bg-primary-50 transition <?php echo $is_active ? 'bg-primary-50 border-l-4 border-l-primary-600' : ''; ?>">
                         <div class="flex justify-between items-start mb-1">
                             <h4 class="text-sm font-black text-gray-800 truncate pr-2"><?php echo h($conv['other_name']); ?></h4>
                             <span class="text-[9px] text-gray-400 font-bold"><?php echo date('H:i', strtotime($conv['created_at'])); ?></span>
@@ -131,7 +131,7 @@ include __DIR__ . '/templates/header.php';
                 <!-- Header -->
                 <div class="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0 z-10">
                     <div class="flex items-center gap-4">
-                        <a href="chat.php" class="md:hidden text-gray-400 hover:text-primary-600"><i class="fas fa-arrow-left"></i></a>
+                        <a href="/chat.php" class="md:hidden text-gray-400 hover:text-primary-600"><i class="fas fa-arrow-left"></i></a>
                         <div class="w-12 h-12 bg-primary-100 rounded-2xl flex items-center justify-center text-primary-600 font-black uppercase text-xl shadow-inner">
                             <?php
                             $target_name = "";
@@ -148,7 +148,7 @@ include __DIR__ . '/templates/header.php';
                         </div>
                         <div>
                             <h3 class="font-black text-gray-800 leading-tight"><?php echo h($target_name); ?></h3>
-                            <a href="ad.php?id=<?php echo $ad['id']; ?>" class="text-[10px] text-primary-600 font-black uppercase tracking-widest hover:underline"><?php echo h($ad['title']); ?></a>
+                            <a href="/ad.php?id=<?php echo $ad['id']; ?>" class="text-[10px] text-primary-600 font-black uppercase tracking-widest hover:underline"><?php echo h($ad['title']); ?></a>
                         </div>
                     </div>
                     <div class="hidden sm:block">

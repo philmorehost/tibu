@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $stmt = $pdo->prepare("UPDATE users SET full_name = ?, phone = ?, business_name = ?, website_url = ?, instagram_url = ?, twitter_url = ? WHERE id = ?");
     $stmt->execute([$full_name, $phone, $business_name, $website_url, $instagram_url, $twitter_url, $_SESSION['user_id']]);
-    redirect('profile.php', 'Profile updated.');
+    redirect('/profile.php', 'Profile updated.');
 }
 
 include __DIR__ . '/templates/header.php';

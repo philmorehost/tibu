@@ -204,7 +204,7 @@ include __DIR__ . '/templates/header.php';
 
                         <div class="flex gap-2">
                         <?php if (($ad['ad_tier'] ?? 'free') === 'free' && $ad['status'] == 'active'): ?>
-                            <a href="boost.php?ad_id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-primary-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition uppercase shadow-md tracking-wider">
+                            <a href="/boost.php?ad_id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-primary-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition uppercase shadow-md tracking-wider">
                                 <?php echo ($ad['last_payment_status'] == 'failed') ? 'Retry Boost' : 'Boost Ad'; ?>
                             </a>
                         <?php endif; ?>

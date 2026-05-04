@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $message = $_POST['message'];
     $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, ad_id, message) VALUES (?, 0, 0, ?)");
     $stmt->execute([$user_id, $message]);
-    redirect('support.php', 'Support request sent.');
+    redirect('/support.php', 'Support request sent.');
 }
 
 include __DIR__ . '/templates/header.php';

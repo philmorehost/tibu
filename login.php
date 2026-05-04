@@ -117,7 +117,7 @@ include __DIR__ . '/templates/header.php';
                 <div class="text-[10px] text-red-500 text-center font-bold">Google Login Not Configured</div>
                 <?php endif; ?>
                 <?php if ($facebook_active): ?>
-                <a href="social.php?provider=facebook" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
+                <a href="/social.php?provider=facebook" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
                     <i class="fab fa-facebook text-blue-600 mr-2"></i> Facebook
                 </a>
                 <?php endif; ?>

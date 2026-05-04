@@ -290,11 +290,11 @@ include __DIR__ . '/templates/header.php';
                     </div>
 
                     <?php if (is_user_logged_in() && $_SESSION['user_id'] != $ad['user_id']): ?>
-                        <a href="chat.php?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-700 transition shadow-xl shadow-primary-100 flex items-center justify-center gap-3 active:scale-95">
+                        <a href="/chat.php?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-700 transition shadow-xl shadow-primary-100 flex items-center justify-center gap-3 active:scale-95">
                             <i class="fas fa-comment-dots"></i> START CHAT
                         </a>
                         <?php if ($ad['listing_type'] != 'for_sale'): ?>
-                            <a href="swap_propose.php?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95">
+                            <a href="/swap_propose.php?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95">
                                 <i class="fas fa-exchange-alt"></i> PROPOSE A SWAP
                             </a>
                         <?php endif; ?>

@@ -125,10 +125,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($tier !== 'free') {
             // Redirect to payment if not free
-            redirect("boost.php?ad_id=$ad_id&tier=$tier", "Ad saved! Please complete payment to activate your " . ucfirst($tier) . " package.");
+            redirect("/boost.php?ad_id=$ad_id&tier=$tier", "Ad saved! Please complete payment to activate your " . ucfirst($tier) . " package.");
         }
 
-        redirect('profile.php', 'Ad posted successfully! It will be live after moderation.');
+        redirect('/profile.php', 'Ad posted successfully! It will be live after moderation.');
     } catch (Exception $e) {
         error_log("Post Ad Error: " . $e->getMessage());
         $error = "An error occurred while posting your ad. " . $e->getMessage();
