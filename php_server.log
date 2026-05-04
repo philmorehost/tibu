@@ -1,7 +1,0 @@
-[Mon May  4 17:40:20 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Mon May  4 17:41:17 2026] [::1]:36998 Accepted
-[Mon May  4 17:41:17 2026] [::1]:36998 [200]: GET /index.php
-[Mon May  4 17:41:17 2026] [::1]:36998 Closing
-[Mon May  4 17:41:17 2026] [::1]:37002 Accepted
-[Mon May  4 17:41:17 2026] [::1]:37002 [200]: GET /index.php
-[Mon May  4 17:41:17 2026] [::1]:37002 Closing

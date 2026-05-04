@@ -192,9 +192,34 @@ include __DIR__ . '/templates/header.php';
 
                 <!-- Input -->
                 <div class="p-6 bg-white border-t border-gray-100">
-                    <form method="POST" class="flex gap-3 items-end">
-                        <div class="flex-1 bg-gray-50 rounded-2xl p-2 border-2 border-transparent focus-within:border-primary-500 transition">
-                            <textarea name="message" rows="1" class="w-full bg-transparent p-3 outline-none text-sm font-bold text-gray-700 resize-none" placeholder="Type your message..." required autofocus onkeydown="if(event.keyCode == 13 && !event.shiftKey) { this.form.submit(); return false; }"></textarea>
+                    <!-- Quick Reply Chips -->
+                    <div class="flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
+                        <?php
+                        $chips = ["Is it still available?", "What's the last price?", "Where is your location?", "Can we swap?", "I'm interested!"];
+                        foreach ($chips as $chip):
+                        ?>
+                            <button type="button" onclick="setQuickReply('<?php echo addslashes($chip); ?>')" class="whitespace-nowrap bg-gray-50 hover:bg-primary-50 text-gray-600 hover:text-primary-600 border border-gray-100 hover:border-primary-200 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-tight transition active:scale-95">
+                                <?php echo $chip; ?>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+
+                    <form method="POST" id="chatForm" class="flex gap-3 items-end">
+                        <div class="flex-1 bg-gray-50 rounded-2xl p-2 border-2 border-transparent focus-within:border-primary-500 transition relative">
+                            <textarea id="messageInput" name="message" rows="1" class="w-full bg-transparent p-3 pr-10 outline-none text-sm font-bold text-gray-700 resize-none" placeholder="Type your message..." required autofocus onkeydown="if(event.keyCode == 13 && !event.shiftKey) { this.form.submit(); return false; }"></textarea>
+                            <button type="button" onclick="toggleEmojiPicker()" class="absolute right-4 bottom-5 text-gray-400 hover:text-primary-600 transition">
+                                <i class="far fa-smile text-xl"></i>
+                            </button>
+
+                            <!-- Simple Emoji Picker -->
+                            <div id="emojiPicker" class="hidden absolute bottom-full right-0 mb-4 bg-white shadow-2xl border border-gray-100 rounded-2xl p-3 grid grid-cols-6 gap-2 z-50">
+                                <?php
+                                $emojis = ['😊', '🤝', '🔥', '👍', '💰', '📍', '🙌', '📱', '✅', '⭐', '🚗', '🏠'];
+                                foreach ($emojis as $e):
+                                ?>
+                                    <button type="button" onclick="addEmoji('<?php echo $e; ?>')" class="text-xl hover:scale-125 transition active:scale-95"><?php echo $e; ?></button>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                         <button type="submit" class="bg-primary-600 text-white w-14 h-14 rounded-2xl flex items-center justify-center hover:bg-primary-700 transition shadow-xl shadow-primary-100 active:scale-95">
                             <i class="fas fa-paper-plane text-lg"></i>
@@ -218,7 +243,32 @@ include __DIR__ . '/templates/header.php';
 
 <script>
     const chatBox = document.getElementById('chatBox');
+    const messageInput = document.getElementById('messageInput');
+    const emojiPicker = document.getElementById('emojiPicker');
+
     if (chatBox) chatBox.scrollTop = chatBox.scrollHeight;
+
+    function setQuickReply(text) {
+        messageInput.value = text;
+        messageInput.focus();
+    }
+
+    function toggleEmojiPicker() {
+        emojiPicker.classList.toggle('hidden');
+    }
+
+    function addEmoji(emoji) {
+        messageInput.value += emoji;
+        emojiPicker.classList.add('hidden');
+        messageInput.focus();
+    }
+
+    // Close emoji picker when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!emojiPicker.contains(e.target) && !e.target.closest('button')) {
+            emojiPicker.classList.add('hidden');
+        }
+    });
 </script>
 
 <?php include __DIR__ . '/templates/footer.php'; ?>
