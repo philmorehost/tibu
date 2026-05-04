@@ -278,7 +278,7 @@ include __DIR__ . '/templates/header.php';
                     <div class="space-y-3">
                         <button onclick="showPhoneModal()" class="w-full bg-white border-2 border-primary-600 text-primary-600 py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-50 transition flex items-center justify-center gap-3 active:scale-95 shadow-sm">
                             <i class="fas fa-phone-alt"></i>
-                            <span id="blurredPhone"><?php echo substr($ad["seller_phone"], 0, 7); ?>XXXX</span>
+                            <span id="blurredPhone"><?php echo substr($ad["seller_phone"] ?? '', 0, 7); ?>XXXX</span>
                         </button>
                         <p class="text-[9px] text-gray-400 font-black text-center uppercase tracking-widest">Click to show full number</p>
                     </div>
@@ -617,7 +617,12 @@ function closePhoneModal() {
     document.getElementById("phoneModal").classList.remove("flex");
 }
 function revealNumber() {
-    const fullPhone = "<?php echo h($ad["seller_phone"]); ?>";
+    const fullPhone = "<?php echo h($ad["seller_phone"] ?? ''); ?>";
+    if (!fullPhone) {
+        alert('Phone number not available for this seller.');
+        closePhoneModal();
+        return;
+    }
     const telLink = "tel:" + fullPhone.replace(/^0/, "234");
     document.getElementById("blurredPhone").textContent = fullPhone;
     window.location.href = telLink;
