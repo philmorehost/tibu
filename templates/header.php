@@ -183,6 +183,10 @@ if (isset($pdo)) {
                         <i class="fas fa-plus text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">SELL</span>
                     </a>
+                    <a href="/search.php?type=swap" class="bg-blue-600 text-white p-2 md:px-4 md:py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center justify-center">
+                        <i class="fas fa-sync-alt text-xl md:text-base md:mr-1"></i>
+                        <span class="hidden md:inline">SWAP</span>
+                    </a>
                 <?php else: ?>
                     <a href="/login" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
                         <i class="fas fa-sign-in-alt text-xl md:text-base md:mr-1"></i>
@@ -195,6 +199,9 @@ if (isset($pdo)) {
                     <!-- New Post AD Icon for Guest Mobile -->
                     <a href="/post-ad" class="md:hidden text-yellow-500 p-2 flex flex-col items-center">
                         <i class="fas fa-plus-circle text-2xl"></i>
+                    </a>
+                    <a href="/search.php?type=swap" class="md:hidden text-blue-600 p-2 flex flex-col items-center">
+                        <i class="fas fa-sync-alt text-2xl"></i>
                     </a>
                 <?php endif; ?>
             </div>

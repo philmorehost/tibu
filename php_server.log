@@ -1,19 +1,7 @@
-[Sat May  2 15:35:47 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
-[Sat May  2 15:36:30 2026] [::1]:57452 Accepted
-[Sat May  2 15:36:30 2026] [::1]:57452 [200]: GET /login.php
-[Sat May  2 15:36:30 2026] [::1]:57452 Closing
-[Sat May  2 15:36:30 2026] [::1]:57466 Accepted
-[Sat May  2 15:36:30 2026] [::1]:57466 [200]: GET /register.php
-[Sat May  2 15:36:30 2026] [::1]:57466 Closing
-[Sat May  2 15:36:30 2026] [::1]:57470 Accepted
-[Sat May  2 15:36:30 2026] [::1]:57470 [200]: GET /index.php
-[Sat May  2 15:36:30 2026] [::1]:57470 Closing
-[Sat May  2 16:08:52 2026] [::1]:38204 Accepted
-[Sat May  2 16:08:52 2026] [::1]:38204 [200]: HEAD /api/subcategories.php?parent_id=1
-[Sat May  2 16:08:52 2026] [::1]:38204 Closing
-[Sat May  2 16:09:31 2026] [::1]:55548 Accepted
-[Sat May  2 16:09:31 2026] [::1]:55548 [200]: GET /api/subcategories.php?parent_id=1
-[Sat May  2 16:09:31 2026] [::1]:55548 Closing
-[Mon May  4 13:33:10 2026] [::1]:49336 Accepted
-[Mon May  4 13:33:10 2026] [::1]:49336 [200]: GET /category/cars
-[Mon May  4 13:33:10 2026] [::1]:49336 Closing
+[Mon May  4 17:40:20 2026] PHP 8.3.6 Development Server (http://localhost:8000) started
+[Mon May  4 17:41:17 2026] [::1]:36998 Accepted
+[Mon May  4 17:41:17 2026] [::1]:36998 [200]: GET /index.php
+[Mon May  4 17:41:17 2026] [::1]:36998 Closing
+[Mon May  4 17:41:17 2026] [::1]:37002 Accepted
+[Mon May  4 17:41:17 2026] [::1]:37002 [200]: GET /index.php
+[Mon May  4 17:41:17 2026] [::1]:37002 Closing

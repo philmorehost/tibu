@@ -9,6 +9,7 @@ if (!isset($pdo)) {
 }
 if (!isset($pdo)) return;
 
+if (isset($_SESSION["schema_verified"])) return;
 
 $tables = [
     'ads' => [
@@ -374,3 +375,4 @@ try {
 } catch (Exception $e) {}
 
 error_log("Schema sync completed successfully.");
+$_SESSION["schema_verified"] = true;

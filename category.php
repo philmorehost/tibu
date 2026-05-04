@@ -536,6 +536,7 @@ function clearCheckboxSearch(btn) {
 let currentCategoryId = <?php echo $cat_id; ?>;
 let currentMainCategoryId = <?php echo $current_main_id; ?>;
 let currentType = "<?php echo $type; ?>";
+let currentSlug = "<?php echo $slug; ?>";
 
 document.addEventListener('DOMContentLoaded', () => loadFilters(currentCategoryId));
 
@@ -558,13 +559,15 @@ function updateAds() {
         .then(data => {
             if (data.success) {
                 renderAds(data.ads);
-                window.history.pushState({}, '', `?${params.toString()}`);
+                if (document.getElementById('resultsCount')) document.getElementById('resultsCount').innerText = data.ads.length;
+                window.history.pushState({}, '', `/category/${currentSlug}?${params.toString()}`);
             }
             grid.style.opacity = '1';
         });
 }
 
 function switchCategory(slug, id, el) {
+    currentSlug = slug;
     currentCategoryId = id;
     document.querySelectorAll('.sub-nav-link').forEach(l => {
         l.classList.remove('text-primary-600', 'bg-primary-50');
