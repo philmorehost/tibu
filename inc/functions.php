@@ -96,9 +96,6 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
         }
     }
 
-    // Apply Watermark
-    apply_site_watermark($src, $seller_info);
-
     $filename = md5(uniqid(rand(), true)) . ".jpg";
     $target_file = $target_dir . "/" . $filename;
 
@@ -106,7 +103,11 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
     $new_height = (int)(($height / $width) * $new_width);
     $tmp = imagecreatetruecolor($new_width, $new_height);
     imagecopyresampled($tmp, $src, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
-    imagejpeg($tmp, $target_file, 80);
+
+    // Apply Watermark to the resized image for better quality
+    apply_site_watermark($tmp, $seller_info);
+
+    imagejpeg($tmp, $target_file, 85);
 
     // Save hash
     if ($pdo && $ad_id) {
@@ -195,6 +196,7 @@ function generate_phash($resource) {
 
 /**
  * Apply Site Watermark (Feature 06) - Dynamic with Site and Seller branding
+ * Jiji-style enhanced watermark
  */
 function apply_site_watermark($resource, $seller_info = "") {
     global $pdo;
@@ -209,47 +211,57 @@ function apply_site_watermark($resource, $seller_info = "") {
             $stmt = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'site_name'");
             $site_name = $stmt->fetchColumn();
         } catch (Exception $e) {
-            $site_name = "Classifieds";
+            $site_name = "Tibung";
         }
     }
 
-    $site_text = $site_name ?: "Classifieds";
-    $white = imagecolorallocatealpha($resource, 255, 255, 255, 35); // Slightly lighter for complex text
+    $site_text = $site_name ?: "Tibung";
+
+    // Allocate Colors
+    $white = imagecolorallocate($resource, 255, 255, 255);
+    $black = imagecolorallocate($resource, 0, 0, 0);
+    $bg_alpha = imagecolorallocatealpha($resource, 0, 0, 0, 80); // Semi-transparent dark strip
 
     if (file_exists($font_path) && function_exists('imagettftext')) {
-        $font_size = (int)($width / 14);
-
-        // Main Centered Site Name
-        $bbox = imagettfbbox($font_size, 0, $font_path, $site_text);
-        $text_width = $bbox[2] - $bbox[0];
-        $text_height = $bbox[7] - $bbox[1];
-        $x = (int)(($width / 2) - ($text_width / 2));
-        $y = (int)(($height / 2) - ($text_height / 2));
-        imagettftext($resource, $font_size, 0, $x, $y, $white, $font_path, $site_text);
-
-        // Bottom Right: Site Name + Seller Info (Business name)
-        $seller_text = $site_text . ($seller_info ? " | " . $seller_info : "");
-        $small_size = (int)max(8, $width / 45);
-        $bbox_small = imagettfbbox($small_size, 0, $font_path, $seller_text);
-        $sx = (int)($width - ($bbox_small[2] - $bbox_small[0]) - 20);
-        $sy = (int)($height - 20);
-        imagettftext($resource, $small_size, 0, $sx, $sy, $white, $font_path, $seller_text);
-
-        // Tiled secondary watermarks (Jiji Style)
-        $tile_text = $site_text;
-        $tile_size = (int)($small_size / 1.5);
-        $tile_color = imagecolorallocatealpha($resource, 255, 255, 255, 15);
-        for ($tx = 20; $tx < $width; $tx += ($width/3)) {
-            for ($ty = 30; $ty < $height; $ty += ($height/4)) {
-                imagettftext($resource, $tile_size, 45, (int)$tx, (int)$ty, $tile_color, $font_path, $tile_text);
+        // 1. Tiled Faint Watermarks (Diagonal)
+        $tile_size = (int)max(12, $width / 25);
+        $tile_color = imagecolorallocatealpha($resource, 255, 255, 255, 115); // Very faint white
+        for ($tx = -50; $tx < $width + 100; $tx += ($width/2.5)) {
+            for ($ty = -50; $ty < $height + 100; $ty += ($height/3.5)) {
+                imagettftext($resource, $tile_size, 35, (int)$tx, (int)$ty, $tile_color, $font_path, $site_text);
             }
         }
+
+        // 2. Enhanced Bottom Branding Strip
+        $main_text = "Posted on " . $site_text . ($seller_info ? ", " . $seller_info : "");
+        $font_size = (int)max(10, $width / 35);
+        $bbox = imagettfbbox($font_size, 0, $font_path, $main_text);
+        $text_w = $bbox[2] - $bbox[0];
+        $text_h = $bbox[1] - $bbox[7]; // Height calculation correction
+
+        $padding = (int)($height * 0.03); // 3% of height as padding
+        $rect_h = $text_h + ($padding * 2);
+
+        // Draw branding background strip at the bottom
+        imagefilledrectangle($resource, 0, $height - $rect_h, $width, $height, $bg_alpha);
+
+        // Center text in the strip
+        $tx = (int)(($width / 2) - ($text_w / 2));
+        $ty = (int)($height - $padding);
+
+        // Text Shadow for readability
+        imagettftext($resource, $font_size, 0, $tx + 1, $ty + 1, $black, $font_path, $main_text);
+        // Main White Text
+        imagettftext($resource, $font_size, 0, $tx, $ty, $white, $font_path, $main_text);
+
     } else {
         // Fallback to basic GD font
+        $main_text = "Posted on " . $site_text . ($seller_info ? ", " . $seller_info : "");
         $font_size = 5;
-        $x = (int)(($width / 2) - (strlen($site_text) * imagefontwidth($font_size) / 2));
-        $y = (int)(($height / 2) - (imagefontheight($font_size) / 2));
-        imagestring($resource, $font_size, $x, $y, $site_text, $white);
+        $tx = (int)(($width / 2) - (strlen($main_text) * imagefontwidth($font_size) / 2));
+        $ty = (int)($height - 20);
+        imagefilledrectangle($resource, 0, $height - 30, $width, $height, $bg_alpha);
+        imagestring($resource, $font_size, $tx, $ty, $main_text, $white);
     }
 }
 
