@@ -28,7 +28,7 @@
             <span class="text-[9px] font-black text-yellow-600 uppercase mt-1">Sell</span>
         </a>
 
-        <a href="/chat" class="flex flex-col items-center gap-1 <?php echo (strpos($_SERVER['PHP_SELF'], '/chat.php') !== false) ? 'text-primary-600' : 'text-gray-400'; ?>">
+        <a href="/chat.php" class="flex flex-col items-center gap-1 <?php echo (strpos($_SERVER['PHP_SELF'], '/chat.php') !== false) ? 'text-primary-600' : 'text-gray-400'; ?>">
             <i class="fas fa-comments text-lg"></i>
             <span class="text-[9px] font-black uppercase">Chats</span>
         </a>

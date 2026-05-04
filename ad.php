@@ -82,6 +82,12 @@ include __DIR__ . '/templates/header.php';
                         <div class="absolute inset-0 bg-cover bg-center blur-2xl brightness-[0.8] opacity-50 transition-all duration-500 scale-110" style="background-image: var(--bg-image)"></div>
                         <img id="mainImage" src="<?php echo $main_img; ?>" class="relative z-10 w-full h-auto object-cover transition-all duration-300 shadow-2xl">
 
+                        <?php if (($ad['listing_type'] ?? '') !== 'for_sale'): ?>
+                            <div class="absolute top-6 right-6 bg-blue-600 text-white text-xs font-black px-4 py-2 rounded-xl uppercase shadow-2xl border border-blue-500 z-20 flex items-center gap-2">
+                                <i class="fas fa-sync-alt"></i> SWAP AVAILABLE
+                            </div>
+                        <?php endif; ?>
+
                         <?php if (count($images) > 1): ?>
                             <button onclick="prevImage(event)" class="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-black/20 hover:bg-black/40 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 backdrop-blur-sm">
                                 <i class="fas fa-chevron-left text-xl"></i>

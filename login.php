@@ -95,7 +95,11 @@ include __DIR__ . '/templates/header.php';
                             try {
                                 const res = JSON.parse(xhr.responseText);
                                 if (res.success) {
-                                    window.location.href = 'index.php';
+                                    if (res.needs_phone) {
+                                        window.location.href = 'profile_edit.php?notice=please_add_phone';
+                                    } else {
+                                        window.location.href = 'index.php';
+                                    }
                                 } else {
                                     alert(res.message || 'Login failed');
                                 }

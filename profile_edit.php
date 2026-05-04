@@ -21,6 +21,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 include __DIR__ . '/templates/header.php';
 ?>
 
+<?php if (isset($_GET['notice']) && $_GET['notice'] === 'please_add_phone'): ?>
+<div class="container mx-auto px-4 mt-6">
+    <div class="bg-blue-100 text-blue-700 border-2 border-blue-200 p-4 rounded-xl font-bold text-sm flex items-center gap-3 shadow-sm">
+        <i class="fas fa-info-circle"></i>
+        Please update your phone number to complete your profile. This is required for buyers to reach you.
+    </div>
+</div>
+<?php endif; ?>
+
 <div class="container mx-auto px-4 py-10 flex justify-center">
     <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
         <h1 class="text-2xl font-bold mb-8 text-primary-600 border-b pb-4"><i class="fas fa-user-edit mr-2"></i> Edit Profile</h1>

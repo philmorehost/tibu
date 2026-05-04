@@ -41,23 +41,29 @@ $email = $payload['email'];
 $name = $payload['name'];
 
 // Find or create user
-$stmt = $pdo->prepare("SELECT id, full_name, is_suspended FROM users WHERE email = ?");
+$stmt = $pdo->prepare("SELECT id, full_name, phone, is_suspended FROM users WHERE email = ?");
 $stmt->execute([$email]);
 $user = $stmt->fetch();
+
+$needs_phone = false;
 
 if ($user) {
     if ($user['is_suspended']) {
         echo json_encode(['success' => false, 'message' => 'Account suspended']);
         exit;
     }
+    if (empty($user['phone'])) {
+        $needs_phone = true;
+    }
 } else {
     // Create new user (social login users are verified by default)
     $stmt = $pdo->prepare("INSERT INTO users (full_name, email, is_verified) VALUES (?, ?, 1)");
     $stmt->execute([$name, $email]);
     $user = ['id' => $pdo->lastInsertId(), 'full_name' => $name];
+    $needs_phone = true;
 }
 
 $_SESSION['user_id'] = $user['id'];
 $_SESSION['user_name'] = $user['full_name'];
 
-echo json_encode(['success' => true]);
+echo json_encode(['success' => true, 'needs_phone' => $needs_phone]);
