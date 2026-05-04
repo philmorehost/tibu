@@ -70,7 +70,7 @@ if ($extra) {
 
         if (in_array($key, $all_possible_keys)) {
             if ($key === 'verified_seller' && $value === 'Verified sellers only') {
-                $query .= " AND u.is_verified = 1";
+                $query .= " AND (u.is_verified = 1 OR u.verification_tier IN ('nin_verified', 'business_verified'))";
             } else {
                 $query .= " AND JSON_UNQUOTE(JSON_EXTRACT(a.ad_data, '$.\"$key\"')) = ?";
                 $params[] = $value;
@@ -101,16 +101,6 @@ $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $ads = $stmt->fetchAll();
 
-// Track Search History for Recommendations
-if (is_user_logged_in() && !empty($ads)) {
-    $user_id = $_SESSION['user_id'];
-    $stmt_history = $pdo->prepare("INSERT INTO search_history (user_id, keyword, cat_id) VALUES (?, ?, ?)");
-    $stmt_history->execute([$user_id, $q ?: null, $cat_id ?: null]);
-
-    // Trigger automated marketing email (simulated)
-    send_recommendations_email($user_id, $pdo, $settings);
-}
-
 include __DIR__ . '/templates/header.php';
 ?>
 
@@ -126,7 +116,9 @@ include __DIR__ . '/templates/header.php';
                 <div class="py-2">
                     <?php foreach ($main_categories as $mcat): ?>
                         <div class="px-2">
-                            <a href="search.php?q=<?php echo h($q); ?>&cat_id=<?php echo $mcat['id']; ?>&state_id=<?php echo $state_id; ?>&type=<?php echo $type; ?>" class="flex items-center justify-between p-3 rounded-lg hover:bg-primary-50 transition-all <?php echo $mcat['id'] == $cat_id ? 'bg-primary-50 text-primary-600' : 'text-gray-700'; ?>">
+                            <a href="search.php?q=<?php echo h($q); ?>&cat_id=<?php echo $mcat['id']; ?>&state_id=<?php echo $state_id; ?>&type=<?php echo $type; ?>"
+                               onclick="event.preventDefault(); switchCategory(<?php echo $mcat['id']; ?>, this)"
+                               class="category-nav-link flex items-center justify-between p-3 rounded-lg transition-all <?php echo $mcat['id'] == $cat_id ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'; ?>">
                                 <div class="flex items-center gap-3">
                                     <i class="fas <?php echo h($mcat['icon_class']); ?> text-sm opacity-50 <?php echo $mcat['id'] == $cat_id ? 'text-primary-600 opacity-100' : ''; ?>"></i>
                                     <span class="text-sm font-bold"><?php echo h($mcat['name']); ?></span>
@@ -143,11 +135,11 @@ include __DIR__ . '/templates/header.php';
                 <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest mb-6 pb-2 border-b">Refine Results</h3>
                 <form action="search.php" method="GET" class="space-y-6">
                     <input type="hidden" name="q" value="<?php echo h($q); ?>">
-                    <input type="hidden" name="cat_id" value="<?php echo h($cat_id); ?>">
+                    <input type="hidden" name="cat_id" id="cat_id_input" value="<?php echo h($cat_id); ?>">
 
                     <div>
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">State</label>
-                        <select name="state_id" onchange="loadLGAs(this.value); this.form.submit()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                        <select name="state_id" onchange="loadLGAs(this.value); updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
                             <option value="">All Nigeria</option>
                             <?php foreach ($states as $s): ?>
                                 <option value="<?php echo $s['id']; ?>" <?php echo $state_id == $s['id'] ? 'selected' : ''; ?>><?php echo h($s['name']); ?></option>
@@ -157,7 +149,7 @@ include __DIR__ . '/templates/header.php';
 
                     <div id="lga_filter_container" class="<?php echo !$state_id ? 'hidden' : ''; ?>">
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">City / LGA</label>
-                        <select name="lga_id" id="lga_filter" onchange="this.form.submit()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                        <select name="lga_id" id="lga_filter" onchange="updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
                             <option value="">All Cities</option>
                             <?php
                             if ($state_id) {
@@ -174,7 +166,7 @@ include __DIR__ . '/templates/header.php';
 
                     <div>
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Listing Type</label>
-                        <select name="type" onchange="this.form.submit()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                        <select name="type" onchange="updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
                             <option value="all" <?php echo $type == 'all' ? 'selected' : ''; ?>>All Types</option>
                             <option value="sale" <?php echo $type == 'sale' ? 'selected' : ''; ?>>For Sale</option>
                             <option value="swap" <?php echo $type == 'swap' ? 'selected' : ''; ?>>For Swap</option>
@@ -184,8 +176,8 @@ include __DIR__ . '/templates/header.php';
                     <div>
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Price Range (₦)</label>
                         <div class="grid grid-cols-2 gap-2">
-                            <input type="number" name="min_price" value="<?php echo $min_price ?: ''; ?>" placeholder="Min" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
-                            <input type="number" name="max_price" value="<?php echo $max_price ?: ''; ?>" placeholder="Max" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                            <input type="number" name="min_price" value="<?php echo $min_price ?: ''; ?>" placeholder="Min" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
+                            <input type="number" name="max_price" value="<?php echo $max_price ?: ''; ?>" placeholder="Max" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
                         </div>
                     </div>
 
@@ -193,7 +185,7 @@ include __DIR__ . '/templates/header.php';
                         <!-- Filters here -->
                     </div>
 
-                    <button type="submit" class="w-full bg-primary-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary-700 transition shadow-lg shadow-primary-100">Apply Filters</button>
+                    <button type="button" onclick="updateAds()" class="w-full bg-primary-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-widest hover:bg-primary-700 transition shadow-lg shadow-primary-100">Apply Filters</button>
 
                     <?php if ($cat_id || $state_id || $min_price || $max_price || $q || $extra): ?>
                         <a href="search.php" class="block text-center text-[10px] font-black text-red-400 uppercase tracking-widest mt-4 hover:text-red-600 transition">Clear All Filters</a>
@@ -207,71 +199,111 @@ include __DIR__ . '/templates/header.php';
             <div class="bg-white rounded-3xl p-8 mb-8 shadow-sm border border-gray-50">
                 <h2 class="text-2xl font-black text-gray-800 uppercase tracking-tighter">
                     <?php echo $q ? "Search Results for \"".h($q)."\"" : "Marketplace Browser"; ?>
-                    <span class="text-xs text-gray-400 ml-4 font-black bg-gray-100 px-3 py-1 rounded-full"><?php echo count($ads); ?> Listings Found</span>
+                    <span id="resultsCount" class="text-xs text-gray-400 ml-4 font-black bg-gray-100 px-3 py-1 rounded-full"><?php echo count($ads); ?> Listings Found</span>
                 </h2>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-                <?php foreach ($ads as $ad):
-                    $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
-                ?>
-                <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative <?php echo $tier_info['border'] ?? ''; ?>">
-                    <?php if ($tier_info['shimmer'] ?? false): ?>
-                        <div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>
-                    <?php endif; ?>
-                    <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
-                    <div class="relative h-40 md:h-48 overflow-hidden fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
-                        <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
-                        <?php if ($tier_info): ?>
-                            <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
-                        <?php endif; ?>
-                        <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                            <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
-                        <?php endif; ?>
-                        <div class="absolute bottom-4 left-4">
-                            <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase"><?php echo h($ad['cat_name']); ?></span>
-                        </div>
-                    </div>
-                    <div class="p-4 md:p-5">
-                        <h4 class="text-xs md:text-sm font-black text-gray-800 line-clamp-2 h-8 md:h-10 mb-2 md:mb-4 group-hover:text-primary-600 transition"><?php echo h($ad['title']); ?></h4>
-                        <div class="flex justify-between items-end">
-                            <div>
-                                <p class="text-primary-600 font-black text-base md:text-xl">₦<?php echo number_format($ad['price']); ?></p>
-                                <p class="text-[8px] md:text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> <?php echo h($ad['state_name']); ?></p>
-                            </div>
-                            <?php
-                            $is_saved = false;
-                            if (is_user_logged_in()) {
-                                $s_stmt = $pdo->prepare("SELECT 1 FROM saved_ads WHERE user_id = ? AND ad_id = ?");
-                                $s_stmt->execute([$_SESSION['user_id'], $ad['id']]);
-                                $is_saved = $s_stmt->fetch();
-                            }
-                            ?>
-                            <button onclick="event.preventDefault(); toggleSave(<?php echo $ad['id']; ?>, this)" class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center <?php echo $is_saved ? 'text-red-500 bg-red-50' : 'text-gray-400'; ?> group-hover:bg-red-50 group-hover:text-red-500 transition-colors duration-300">
-                                <i class="<?php echo $is_saved ? 'fas' : 'far'; ?> fa-heart text-sm save-icon-<?php echo $ad['id']; ?>"></i>
-                            </button>
-                        </div>
-                    </div>
-                </a>
-                <?php endforeach; ?>
+            <div id="adsGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 transition-opacity duration-300">
+                <?php include __DIR__ . '/templates/ad_grid_items.php'; ?>
             </div>
-
-            <?php if (empty($ads)): ?>
-                <div class="bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-gray-100">
-                    <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8">
-                        <i class="fas fa-search-minus text-gray-200 text-4xl"></i>
-                    </div>
-                    <h2 class="text-2xl font-black text-gray-800 mb-2 tracking-tighter">No matching results</h2>
-                    <p class="text-gray-400 font-bold">We couldn't find anything matching your search. Try different keywords or filters.</p>
-                    <a href="search.php" class="bg-primary-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-primary-700 transition uppercase shadow-2xl inline-block mt-10 tracking-widest text-xs">VIEW ALL LISTINGS</a>
-                </div>
-            <?php endif; ?>
         </div>
     </div>
 </div>
 
 <script>
-`)
+let currentCategoryId = <?php echo $cat_id; ?>;
+
+function updateAds() {
+    const grid = document.getElementById('adsGrid');
+    grid.style.opacity = '0.5';
+
+    const form = document.querySelector('form');
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+
+    for (const [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+    // cat_id is already in the form hidden input, but ensuring it matches JS state
+    params.set('cat_id', currentCategoryId);
+
+    fetch(`/api/filter_ads.php?${params.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderAds(data.ads);
+                document.getElementById('resultsCount').innerText = `${data.ads.length} Listings Found`;
+                window.history.pushState({}, '', `?${params.toString()}`);
+            }
+            grid.style.opacity = '1';
+        });
+}
+
+function switchCategory(id, el) {
+    currentCategoryId = id;
+    document.getElementById('cat_id_input').value = id;
+    document.querySelectorAll('.category-nav-link').forEach(l => {
+        l.classList.remove('bg-primary-50', 'text-primary-600');
+        l.classList.add('text-gray-700', 'hover:bg-gray-50');
+    });
+    el.classList.add('bg-primary-50', 'text-primary-600');
+    el.classList.remove('text-gray-700', 'hover:bg-gray-50');
+
+    loadFilters(id);
+    updateAds();
+}
+
+function renderAds(ads) {
+    const grid = document.getElementById('adsGrid');
+    if (ads.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-gray-100">
+                <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <i class="fas fa-search-minus text-gray-200 text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-black text-gray-800 mb-2 tracking-tighter">No matching results</h2>
+                <p class="text-gray-400 font-bold">We couldn't find anything matching your search. Try different keywords or filters.</p>
+                <a href="search.php" class="bg-primary-600 text-white px-10 py-5 rounded-2xl font-black hover:bg-primary-700 transition uppercase shadow-2xl inline-block mt-10 tracking-widest text-xs">VIEW ALL LISTINGS</a>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = ads.map((ad, index) => {
+        const tier = ad.tier_info;
+        const border = tier ? tier.border : '';
+        const shimmer = (tier && tier.shimmer) ? '<div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>' : '';
+        const badge = tier ? `<div class="absolute top-4 left-4 ${tier.badge} text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">${tier.label}</div>` : '';
+        const swap = ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>' : '';
+
+        return `
+            <a href="${ad.url}" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative ${border} fade-in-up" style="animation-delay: ${index * 0.05}s">
+                ${shimmer}
+                <div class="relative h-40 md:h-48 overflow-hidden fit-to-frame" style="--bg-image: url('${ad.image_url}')">
+                    <img src="${ad.image_url}" class="group-hover:scale-110 transition duration-700">
+                    ${badge}
+                    ${swap}
+                    <div class="absolute bottom-4 left-4">
+                        <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase">${ad.cat_name}</span>
+                    </div>
+                </div>
+                <div class="p-4 md:p-5">
+                    <h4 class="text-xs md:text-sm font-black text-gray-800 line-clamp-2 h-8 md:h-10 mb-2 md:mb-4 group-hover:text-primary-600 transition">${ad.title}</h4>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-primary-600 font-black text-base md:text-xl">₦${ad.formatted_price}</p>
+                            <p class="text-[8px] md:text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> ${ad.state_name}</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors duration-300">
+                            <i class="far fa-heart text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>`;
+    }).join('');
+}
+
+function toggleSave(adId, btn) {
+    fetch('/api/save_ad.php?ad_id=' + adId)
         .then(res => res.json())
         .then(data => {
             if (!data.success) {
@@ -296,12 +328,6 @@ include __DIR__ . '/templates/header.php';
                     button.classList.add('text-gray-400');
                 }
             });
-
-            const counter = document.getElementById('savedCounter');
-            if (counter) {
-                counter.textContent = data.count;
-                counter.classList.toggle('hidden', parseInt(data.count) === 0);
-            }
         });
 }
 
@@ -325,7 +351,7 @@ function loadFilters(catId) {
                 const val = currentExtra[key] || '';
 
                 if (f.type === 'select') {
-                    html += `<select name="extra[${key}]" onchange="this.form.submit()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">`;
+                    html += `<select name="extra[${key}]" onchange="updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">`;
                     html += '<option value="">All</option>';
                     f.options.forEach(opt => {
                         const sel = (val == opt) ? 'selected' : '';
@@ -333,14 +359,14 @@ function loadFilters(catId) {
                     });
                     html += '</select>';
                 } else if (f.type === 'number') {
-                    html += `<input type="number" name="extra[${key}]" value="${val}" placeholder="Value" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">`;
+                    html += `<input type="number" name="extra[${key}]" value="${val}" placeholder="Value" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">`;
                 } else if (f.type === 'range' || f.type === 'number_range') {
                     const min_val = currentExtra['min_' + key] || '';
                     const max_val = currentExtra['max_' + key] || '';
 
                     html += `<div class="grid grid-cols-2 gap-2 mb-3">
-                        <input type="number" name="extra[min_${key}]" value="${min_val}" placeholder="Min" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
-                        <input type="number" name="extra[max_${key}]" value="${max_val}" placeholder="Max" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                        <input type="number" name="extra[min_${key}]" value="${min_val}" placeholder="Min" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
+                        <input type="number" name="extra[max_${key}]" value="${max_val}" placeholder="Max" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
                     </div>`;
 
                     if (f.quick_ranges) {
@@ -365,7 +391,7 @@ function setQuickRange(key, min, max) {
     if (minInput && maxInput) {
         minInput.value = min;
         maxInput.value = max;
-        minInput.form.submit();
+        updateAds();
     }
 }
 

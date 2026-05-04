@@ -5,7 +5,7 @@ require_once __DIR__ . '/inc/functions.php';
 require_once __DIR__ . '/inc/user_auth.php';
 
 $slug = $_GET['slug'] ?? '';
-$stmt = $pdo->prepare("SELECT id, name FROM categories WHERE slug = ?");
+$stmt = $pdo->prepare("SELECT id, name, parent_id FROM categories WHERE slug = ?");
 $stmt->execute([$slug]);
 $category = $stmt->fetch();
 
@@ -14,6 +14,7 @@ if (!$category) {
 }
 
 $cat_id = $category['id'];
+$parent_id = $category['parent_id'];
 $type = $_GET['type'] ?? 'all';
 $state_id = (int)($_GET['state_id'] ?? 0);
 $lga_id = (int)($_GET['lga_id'] ?? 0);
@@ -167,9 +168,12 @@ include __DIR__ . '/templates/header.php';
                         if ($mcat['id'] != $current_main_id) continue;
                     ?>
                         <div class="px-2">
-                            <a href="/category/<?php echo $mcat['slug']; ?>" class="flex items-center justify-between p-3 rounded-lg bg-primary-50 text-primary-600 transition-all">
+                            <a href="/category/<?php echo $mcat['slug']; ?>"
+                               onclick="event.preventDefault(); switchCategory('<?php echo $mcat['slug']; ?>', <?php echo $mcat['id']; ?>, this)"
+                               class="sub-nav-link flex items-center justify-between p-3 rounded-lg <?php echo $cat_id == $mcat['id'] ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'; ?> transition-all"
+                               data-id="<?php echo $mcat['id']; ?>">
                                 <div class="flex items-center gap-3">
-                                    <i class="fas <?php echo h($mcat['icon_class']); ?> text-sm text-primary-600"></i>
+                                    <i class="fas <?php echo h($mcat['icon_class']); ?> text-sm"></i>
                                     <span class="text-sm font-bold"><?php echo h($mcat['name']); ?></span>
                                 </div>
                                 <span class="text-[10px] font-bold opacity-50"><?php echo number_format($mcat['ad_count']); ?></span>
@@ -189,7 +193,10 @@ include __DIR__ . '/templates/header.php';
                                     foreach ($display_subs as $sub):
                                         $is_active_sub = ($sub['id'] == $cat_id);
                                     ?>
-                                        <a href="/category/<?php echo $sub['slug']; ?>" class="block py-1.5 text-xs font-bold <?php echo $is_active_sub ? 'text-primary-600' : 'text-gray-500 hover:text-primary-600'; ?> transition">
+                                        <a href="/category/<?php echo $sub['slug']; ?>"
+                                           onclick="event.preventDefault(); switchCategory('<?php echo $sub['slug']; ?>', <?php echo $sub['id']; ?>, this)"
+                                           class="sub-nav-link block py-1.5 text-xs font-bold <?php echo $is_active_sub ? 'text-primary-600' : 'text-gray-500 hover:text-primary-600'; ?> transition"
+                                           data-id="<?php echo $sub['id']; ?>">
                                             <?php echo h($sub['name']); ?> <span class="text-[9px] opacity-40">(<?php echo $sub['ad_count']; ?>)</span>
                                         </a>
                                     <?php endforeach; ?>
@@ -206,7 +213,7 @@ include __DIR__ . '/templates/header.php';
                 <form action="" method="GET" class="space-y-6">
                     <div class="mb-6">
                         <label class="flex items-center gap-3 cursor-pointer group">
-                            <input type="checkbox" name="extra[verified_seller]" value="Verified sellers only" <?php echo ($extra["verified_seller"] ?? "") === "Verified sellers only" ? "checked" : ""; ?> onchange="this.form.submit()" class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <input type="checkbox" name="extra[verified_seller]" value="Verified sellers only" <?php echo ($extra["verified_seller"] ?? "") === "Verified sellers only" ? "checked" : ""; ?> onchange="updateAds()" class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
                             <span class="text-xs font-black text-gray-700 uppercase tracking-widest group-hover:text-primary-600 transition">NIN Verified Sellers Only</span>
                         </label>
                     </div>
@@ -214,7 +221,7 @@ include __DIR__ . '/templates/header.php';
 
                     <div>
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">State</label>
-                        <select name="state_id" onchange="loadLGAs(this.value); this.form.submit()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                        <select name="state_id" onchange="loadLGAs(this.value); updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
                             <option value="">All Nigeria</option>
                             <?php foreach ($states as $s): ?>
                                 <option value="<?php echo $s['id']; ?>" <?php echo $state_id == $s['id'] ? 'selected' : ''; ?>><?php echo h($s['name']); ?></option>
@@ -224,7 +231,7 @@ include __DIR__ . '/templates/header.php';
 
                     <div id="lga_filter_container" class="<?php echo !$state_id ? 'hidden' : ''; ?>">
                         <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">City / LGA</label>
-                        <select name="lga_id" id="lga_filter" onchange="this.form.submit()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                        <select name="lga_id" id="lga_filter" onchange="updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
                             <option value="">All Cities</option>
                             <?php
                             if ($state_id) {
@@ -271,16 +278,16 @@ include __DIR__ . '/templates/header.php';
 
             <!-- Horizontal Filter Bar (Type Selection) -->
             <div class="flex flex-wrap gap-3 mb-8">
-                <a href="?type=all&state_id=<?php echo $state_id; ?>&min_price=<?php echo $min_price; ?>&max_price=<?php echo $max_price; ?>" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'all' ? 'bg-primary-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-primary-50'; ?> border border-gray-100">All Items</a>
-                <a href="?type=sale&state_id=<?php echo $state_id; ?>&min_price=<?php echo $min_price; ?>&max_price=<?php echo $max_price; ?>" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'sale' ? 'bg-primary-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-primary-50'; ?> border border-gray-100">For Sale</a>
-                <a href="?type=swap&state_id=<?php echo $state_id; ?>&min_price=<?php echo $min_price; ?>&max_price=<?php echo $max_price; ?>" class="px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'swap' ? 'bg-blue-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-blue-50'; ?> border border-gray-100">Swap/Barter</a>
+                <button onclick="switchType('all', this)" class="type-filter-btn px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'all' ? 'bg-primary-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-primary-50'; ?> border border-gray-100">All Items</button>
+                <button onclick="switchType('sale', this)" class="type-filter-btn px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'sale' ? 'bg-primary-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-primary-50'; ?> border border-gray-100">For Sale</button>
+                <button onclick="switchType('swap', this)" class="type-filter-btn px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'swap' ? 'bg-blue-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-blue-50'; ?> border border-gray-100">Swap/Barter</button>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 <?php foreach ($ads as $ad):
                     $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
                 ?>
-                <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative <?php echo $tier_info['border'] ?? ''; ?>">
+                <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-2xl md:rounded-3xl shadow-sm fade-in-up overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative <?php echo $tier_info['border'] ?? ''; ?>">
                     <?php if ($tier_info['shimmer'] ?? false): ?>
                         <div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>
                     <?php endif; ?>
@@ -370,7 +377,7 @@ function loadFilters(catId) {
                                 <input type="text" placeholder="Search ${f.label}..." onkeyup="filterSelectOptions(this)" class="w-full p-3 bg-transparent border-none text-xs font-bold text-gray-700 outline-none">
                                 <button type="button" onclick="clearSearch(this)" class="hidden text-gray-300 hover:text-gray-500"><i class="fas fa-times-circle"></i></button>
                             </div>
-                            <select name="extra[${key}]" onchange="this.form.submit()" size="5" class="w-full mt-2 p-2 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition custom-scrollbar shadow-inner">
+                            <select name="extra[${key}]" onchange="updateAds()" size="5" class="w-full mt-2 p-2 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition custom-scrollbar shadow-inner">
                                 <option value="" ${val === '' ? 'selected' : ''} class="py-2 px-3">All ${f.label}</option>`;
                         f.options.forEach(opt => {
                             const sel = (val == opt) ? 'selected' : '';
@@ -378,7 +385,7 @@ function loadFilters(catId) {
                         });
                         html += `</select></div>`;
                     } else {
-                        html += `<select name="extra[${key}]" onchange="this.form.submit()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">`;
+                        html += `<select name="extra[${key}]" onchange="updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">`;
                         html += '<option value="">All</option>';
                         f.options.forEach(opt => {
                             const sel = (val == opt) ? 'selected' : '';
@@ -397,7 +404,7 @@ function loadFilters(catId) {
                     f.options.forEach(opt => {
                         const isChecked = Array.isArray(val) ? val.includes(opt) : (val == opt);
                         html += `<label class="flex items-center gap-2 cursor-pointer group checkbox-item">
-                            <input type="checkbox" name="extra[${key}][]" value="${opt}" ${isChecked ? 'checked' : ''} onchange="this.form.submit()" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                            <input type="checkbox" name="extra[${key}][]" value="${opt}" ${isChecked ? 'checked' : ''} onchange="updateAds()" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
                             <span class="text-[11px] font-bold text-gray-600 group-hover:text-primary-600 transition">${opt}</span>
                         </label>`;
                     });
@@ -405,7 +412,7 @@ function loadFilters(catId) {
                 } else if (f.type === 'checkbox') {
                     const isChecked = val == '1' ? 'checked' : '';
                     html += `<label class="flex items-center gap-2 cursor-pointer group">
-                        <input type="checkbox" name="extra[${key}]" value="1" ${isChecked} onchange="this.form.submit()" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                        <input type="checkbox" name="extra[${key}]" value="1" ${isChecked} onchange="updateAds()" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
                         <span class="text-[11px] font-bold text-gray-600 group-hover:text-primary-600 transition">${f.label}</span>
                     </label>`;
                 } else if (f.type === 'range' || f.type === 'number' || f.type === 'number_range') {
@@ -415,8 +422,8 @@ function loadFilters(catId) {
                     let max_name = (key === 'price') ? 'max_price' : `extra[max_${key}]`;
 
                     html += `<div class="grid grid-cols-2 gap-2 mb-3">
-                        <input type="number" name="${min_name}" value="${min_val}" placeholder="Min" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
-                        <input type="number" name="${max_name}" value="${max_val}" placeholder="Max" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
+                        <input type="number" name="${min_name}" value="${min_val}" placeholder="Min" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
+                        <input type="number" name="${max_name}" value="${max_val}" placeholder="Max" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
                     </div>`;
 
                     if (f.quick_ranges) {
@@ -526,7 +533,113 @@ function clearCheckboxSearch(btn) {
     filterCheckboxes(input);
 }
 
-document.addEventListener('DOMContentLoaded', () => loadFilters(<?php echo $cat_id; ?>));
+let currentCategoryId = <?php echo $cat_id; ?>;
+let currentMainCategoryId = <?php echo $current_main_id; ?>;
+let currentType = "<?php echo $type; ?>";
+
+document.addEventListener('DOMContentLoaded', () => loadFilters(currentCategoryId));
+
+function updateAds() {
+    const grid = document.getElementById('adsGrid');
+    grid.style.opacity = '0.5';
+
+    const form = document.querySelector('form');
+    const formData = new FormData(form);
+    const params = new URLSearchParams();
+
+    for (const [key, value] of formData.entries()) {
+        if (value) params.append(key, value);
+    }
+    params.append('cat_id', currentCategoryId);
+    params.set('type', currentType);
+
+    fetch(`/api/filter_ads.php?${params.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                renderAds(data.ads);
+                window.history.pushState({}, '', `?${params.toString()}`);
+            }
+            grid.style.opacity = '1';
+        });
+}
+
+function switchCategory(slug, id, el) {
+    currentCategoryId = id;
+    document.querySelectorAll('.sub-nav-link').forEach(l => {
+        l.classList.remove('text-primary-600', 'bg-primary-50');
+        l.classList.add('text-gray-500');
+    });
+    el.classList.add('text-primary-600');
+    if (el.classList.contains('flex')) {
+        el.classList.add('bg-primary-50');
+    }
+    el.classList.remove('text-gray-500');
+
+    loadFilters(id);
+    updateAds();
+}
+
+function switchType(type, el) {
+    currentType = type;
+    document.querySelectorAll(".type-filter-btn").forEach(btn => {
+        btn.classList.remove("bg-primary-600", "bg-blue-600", "text-white", "shadow-xl");
+        btn.classList.add("bg-white", "text-gray-500", "hover:bg-primary-50");
+    });
+    const colorClass = type === "swap" ? "bg-blue-600" : "bg-primary-600";
+    el.classList.add(colorClass, "text-white", "shadow-xl");
+    el.classList.remove("bg-white", "text-gray-500", "hover:bg-primary-50");
+
+    updateAds();
+}
+
+function renderAds(ads) {
+    const grid = document.getElementById('adsGrid');
+    if (ads.length === 0) {
+        grid.innerHTML = `
+            <div class="col-span-full bg-white p-20 rounded-[3rem] text-center border-2 border-dashed border-gray-100">
+                <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-8">
+                    <i class="fas fa-search text-gray-200 text-4xl"></i>
+                </div>
+                <h2 class="text-2xl font-black text-gray-800 mb-2 tracking-tighter">No results found</h2>
+                <p class="text-gray-400 font-bold">Try adjusting your filters to find what you're looking for.</p>
+            </div>`;
+        return;
+    }
+
+    grid.innerHTML = ads.map((ad, index) => {
+        const tier = ad.tier_info;
+        const border = tier ? tier.border : '';
+        const shimmer = (tier && tier.shimmer) ? '<div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>' : '';
+        const badge = tier ? `<div class="absolute top-4 left-4 ${tier.badge} text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">${tier.label}</div>` : '';
+        const swap = ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>' : '';
+
+        return `
+            <a href="${ad.url}" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative ${border} fade-in-up" style="animation-delay: ${index * 0.05}s">
+                ${shimmer}
+                <div class="relative h-40 md:h-48 overflow-hidden fit-to-frame" style="--bg-image: url('${ad.image_url}')">
+                    <img src="${ad.image_url}" class="group-hover:scale-110 transition duration-700">
+                    ${badge}
+                    ${swap}
+                    <div class="absolute bottom-4 left-4">
+                        <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase">${ad.cat_name}</span>
+                    </div>
+                </div>
+                <div class="p-4 md:p-5">
+                    <h4 class="text-xs md:text-sm font-black text-gray-800 line-clamp-2 h-8 md:h-10 mb-2 md:mb-4 group-hover:text-primary-600 transition">${ad.title}</h4>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-primary-600 font-black text-base md:text-xl">₦${ad.formatted_price}</p>
+                            <p class="text-[8px] md:text-[10px] text-gray-400 font-bold uppercase tracking-widest mt-1"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> ${ad.state_name}</p>
+                        </div>
+                        <div class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors duration-300">
+                            <i class="far fa-heart text-sm"></i>
+                        </div>
+                    </div>
+                </div>
+            </a>`;
+    }).join('');
+}
 </script>
 
 <style>

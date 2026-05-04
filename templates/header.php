@@ -122,6 +122,14 @@ if (isset($pdo)) {
             background-size: 200% 100%;
             animation: shimmer 2s infinite;
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
     </style>
 
     <!-- Open Graph / WhatsApp Integration (Feature 10) -->

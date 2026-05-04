@@ -14,3 +14,6 @@
 [Sat May  2 16:09:31 2026] [::1]:55548 Accepted
 [Sat May  2 16:09:31 2026] [::1]:55548 [200]: GET /api/subcategories.php?parent_id=1
 [Sat May  2 16:09:31 2026] [::1]:55548 Closing
+[Mon May  4 13:33:10 2026] [::1]:49336 Accepted
+[Mon May  4 13:33:10 2026] [::1]:49336 [200]: GET /category/cars
+[Mon May  4 13:33:10 2026] [::1]:49336 Closing
