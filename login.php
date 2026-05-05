@@ -27,7 +27,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             log_login_attempt($email, 0, 1);
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['full_name'];
-            header('Location: index.php');
+
+            $redirect = $_SESSION['redirect_after_login'] ?? 'index.php';
+            unset($_SESSION['redirect_after_login']);
+            header("Location: $redirect");
             exit;
         } else {
             log_login_attempt($email, 0, 0);
@@ -98,7 +101,12 @@ include __DIR__ . '/templates/header.php';
                                     if (res.needs_phone) {
                                         window.location.href = 'profile_edit.php?notice=please_add_phone';
                                     } else {
-                                        window.location.href = 'index.php';
+                                        // Retrieve redirect URL from PHP session (cookie) or fallback
+                                        <?php if(isset($_SESSION['redirect_after_login'])): ?>
+                                            window.location.href = '<?php echo $_SESSION['redirect_after_login']; ?>';
+                                        <?php else: ?>
+                                            window.location.href = 'index.php';
+                                        <?php endif; ?>
                                     }
                                 } else {
                                     alert(res.message || 'Login failed');

@@ -14,17 +14,17 @@
         <div>
             <h4 class="font-bold text-lg mb-4 text-primary-500">Links</h4>
             <ul class="space-y-2 text-sm text-gray-400">
-                <li><a href="/p/terms" class="hover:text-white transition">Terms & Conditions</a></li>
-                <li><a href="/p/privacy" class="hover:text-white transition">Privacy Policy</a></li>
-                <li><a href="/p/billing" class="hover:text-white transition">Billing Policy</a></li>
+                <li><a href="/page.php?slug=terms" class="hover:text-white transition">Terms & Conditions</a></li>
+                <li><a href="/page.php?slug=privacy" class="hover:text-white transition">Privacy Policy</a></li>
+                <li><a href="/page.php?slug=billing" class="hover:text-white transition">Billing Policy</a></li>
             </ul>
         </div>
         <div>
             <h4 class="font-bold text-lg mb-4 text-primary-500">Support</h4>
             <ul class="space-y-2 text-sm text-gray-400">
-                <li><a href="contact.php" class="hover:text-white transition">Contact Us</a></li>
-                <li><a href="/p/faq" class="hover:text-white transition">FAQ</a></li>
-                <li><a href="/p/safety" class="hover:text-white transition">Safety Tips</a></li>
+                <li><a href="/support.php" class="hover:text-white transition">Contact Us</a></li>
+                <li><a href="/page.php?slug=faq" class="hover:text-white transition">FAQ</a></li>
+                <li><a href="/page.php?slug=safety-tips" class="hover:text-white transition">Safety Tips</a></li>
             </ul>
         </div>
         <div>

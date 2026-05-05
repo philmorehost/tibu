@@ -383,5 +383,41 @@ try {
     }
 } catch (Exception $e) {}
 
-error_log("Schema sync completed successfully.");
+// Seed Default Pages
+$pages = [
+    [
+        'title' => 'Terms & Conditions',
+        'slug' => 'terms',
+        'content' => "Welcome to Tibung. By using our platform, you agree to comply with the following terms... [Detailed terms here]"
+    ],
+    [
+        'title' => 'Privacy Policy',
+        'slug' => 'privacy',
+        'content' => "Your privacy is important to us. This policy explains how we collect and use your data... [Detailed policy here]"
+    ],
+    [
+        'title' => 'Billing Policy',
+        'slug' => 'billing',
+        'content' => "All payments on Tibung are processed securely. This policy outlines our refund and billing procedures... [Detailed policy here]"
+    ],
+    [
+        'title' => 'Safety Tips',
+        'slug' => 'safety-tips',
+        'content' => "Safety is our priority. Follow these tips to ensure a safe trading experience... [Detailed tips here]"
+    ],
+    [
+        'title' => 'Frequently Asked Questions',
+        'slug' => 'faq',
+        'content' => "JSON: [{\"q\": \"How to post an ad?\", \"a\": \"Click on the Sell button and fill the form.\"}, {\"q\": \"Is it free?\", \"a\": \"Yes, we have free and premium packages.\"}]"
+    ]
+];
+
+foreach ($pages as $p) {
+    try {
+        $stmt = $pdo->prepare("INSERT IGNORE INTO pages (title, slug, content) VALUES (?, ?, ?)");
+        $stmt->execute([$p['title'], $p['slug'], $p['content']]);
+    } catch (Exception $e) {}
+}
+
+error_log("Schema sync and page seeding completed successfully.");
 $_SESSION["schema_verified"] = true;
