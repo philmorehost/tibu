@@ -42,7 +42,7 @@ foreach ($packages as $p) {
 $boost_price = (float)($current_pkg['price'] ?? 2000);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bank_transfer'])) {
-    $filename = process_image_upload($_FILES['proof']['tmp_name'], __DIR__ . '/uploads/proofs', 800);
+    $filename = process_image_upload($_FILES['proof']['tmp_name'], __DIR__ . '/uploads/proofs', 800, 0, 0, false);
     if ($filename) {
         $stmt = $pdo->prepare("INSERT INTO payments (user_id, ad_id, amount, method, reference, status, proof_image, ad_tier) VALUES (?, ?, ?, 'bank_transfer', ?, 'pending', ?, ?)");
         $reference = 'BT-'.time().'-'.rand(100, 999);

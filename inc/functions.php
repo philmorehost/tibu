@@ -59,7 +59,7 @@ function get_client_ip() {
 /**
  * Image Upload & Processing (GD Library) - Enhanced with pHash & Watermark
  */
-function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id = 0, $ad_id = 0) {
+function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id = 0, $ad_id = 0, $watermark = true) {
     global $pdo;
     if (!is_dir($target_dir)) {
         mkdir($target_dir, 0755, true);
@@ -105,7 +105,9 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
     imagecopyresampled($tmp, $src, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
 
     // Apply Watermark to the resized image for better quality
-    apply_site_watermark($tmp, $seller_info);
+    if ($watermark) {
+        apply_site_watermark($tmp, $seller_info);
+    }
 
     imagejpeg($tmp, $target_file, 85);
 
@@ -223,7 +225,17 @@ function apply_site_watermark($resource, $seller_info = "") {
     $bg_alpha = imagecolorallocatealpha($resource, 0, 0, 0, 80); // Semi-transparent dark strip
 
     if (file_exists($font_path) && function_exists('imagettftext')) {
-        // 1. Tiled Faint Watermarks (Diagonal)
+        // 1. Centered Large Watermark (Primary protection)
+        $center_font_size = (int)($width / 8);
+        $center_color = imagecolorallocatealpha($resource, 255, 255, 255, 100); // 115 is faint, 100 is slightly more visible
+        $bbox_center = imagettfbbox($center_font_size, 20, $font_path, $site_text);
+        $cw = $bbox_center[2] - $bbox_center[0];
+        $ch = $bbox_center[1] - $bbox_center[7];
+        $cx = (int)(($width / 2) - ($cw / 2));
+        $cy = (int)(($height / 2) + ($ch / 2));
+        imagettftext($resource, $center_font_size, 20, $cx, $cy, $center_color, $font_path, $site_text);
+
+        // 2. Tiled Faint Watermarks (Diagonal)
         $tile_size = (int)max(12, $width / 25);
         $tile_color = imagecolorallocatealpha($resource, 255, 255, 255, 115); // Very faint white
         for ($tx = -50; $tx < $width + 100; $tx += ($width/2.5)) {
@@ -232,7 +244,7 @@ function apply_site_watermark($resource, $seller_info = "") {
             }
         }
 
-        // 2. Enhanced Bottom Branding Strip
+        // 3. Enhanced Bottom Branding Strip
         $main_text = "Posted on " . $site_text . ($seller_info ? ", " . $seller_info : "");
         $font_size = (int)max(10, $width / 35);
         $bbox = imagettfbbox($font_size, 0, $font_path, $main_text);

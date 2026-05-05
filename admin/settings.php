@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Handle Logo Upload
         if (!empty($_FILES['site_logo']['name'])) {
             $target_dir = __DIR__ . "/../uploads/branding";
-            $logo_name = process_image_upload($_FILES['site_logo']['tmp_name'], $target_dir, 400);
+            $logo_name = process_image_upload($_FILES['site_logo']['tmp_name'], $target_dir, 400, 0, 0, false);
             if ($logo_name && $logo_name !== "DUPLICATE") {
                 $_POST['s']['site_logo'] = $logo_name;
             }
