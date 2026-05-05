@@ -62,6 +62,37 @@ $recent_ads = $stmt->fetchAll();
 include __DIR__ . '/templates/header.php';
 ?>
 
+<!-- Splash Animation -->
+<div id="splash" class="fixed inset-0 z-[1000] bg-white flex items-center justify-center pointer-events-none transition-opacity duration-1000">
+    <?php if (!empty($settings['site_logo'])): ?>
+        <img src="/uploads/branding/<?php echo h($settings['site_logo']); ?>" class="h-24 md:h-32 w-auto object-contain animate-spin-once">
+    <?php else: ?>
+        <span class="text-4xl font-black text-primary-600 animate-spin-once"><?php echo h($settings['site_name'] ?? 'T'); ?></span>
+    <?php endif; ?>
+</div>
+
+<style>
+@keyframes spin-once {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.animate-spin-once {
+    animation: spin-once 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+</style>
+
+<script>
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash');
+        if (splash) {
+            splash.style.opacity = '0';
+            setTimeout(() => splash.remove(), 1000);
+        }
+    }, 1500);
+});
+</script>
+
 <div class="container mx-auto px-4 py-8">
     <!-- <?php echo h($settings['site_name'] ?? 'Classifieds'); ?>-Style Search Bar (Mobile Only) -->
     <div class="mb-8 md:hidden">
