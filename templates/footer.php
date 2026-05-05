@@ -8,7 +8,7 @@
             <h4 class="font-bold text-lg mb-4 text-primary-500">Company</h4>
             <ul class="space-y-2 text-sm text-gray-400">
                 <li><a href="/blog" class="hover:text-white transition">Marketplace Blog</a></li>
-                <li><a href="/contact" class="hover:text-white transition">Contact Us</a></li>
+                <li><a href="/packages.php" class="hover:text-white transition">Pricing Plans</a></li>
             </ul>
         </div>
         <div>

@@ -226,8 +226,8 @@ function apply_site_watermark($resource, $seller_info = "") {
 
     if (file_exists($font_path) && function_exists('imagettftext')) {
         // 1. Centered Large Watermark (Primary protection)
-        $center_font_size = (int)($width / 6);
-        $center_color = imagecolorallocatealpha($resource, 255, 255, 255, 80); // More visible
+        $center_font_size = (int)($width / 4.5);
+        $center_color = imagecolorallocatealpha($resource, 255, 255, 255, 70); // Even more visible
         $bbox_center = imagettfbbox($center_font_size, 20, $font_path, $site_text);
         $cw = $bbox_center[2] - $bbox_center[0];
         $ch = $bbox_center[1] - $bbox_center[7];
@@ -246,7 +246,7 @@ function apply_site_watermark($resource, $seller_info = "") {
 
         // 3. Enhanced Bottom Branding Strip
         $main_text = "Posted on " . $site_text . ($seller_info ? ", " . $seller_info : "");
-        $font_size = (int)max(14, $width / 25);
+        $font_size = (int)max(16, $width / 20);
         $bbox = imagettfbbox($font_size, 0, $font_path, $main_text);
         $text_w = $bbox[2] - $bbox[0];
         $text_h = $bbox[1] - $bbox[7]; // Height calculation correction

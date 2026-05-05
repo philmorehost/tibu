@@ -280,7 +280,7 @@ include __DIR__ . '/templates/header.php';
             <div class="flex flex-wrap gap-3 mb-8">
                 <button onclick="switchType('all', this)" class="type-filter-btn px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'all' ? 'bg-primary-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-primary-50'; ?> border border-gray-100">All Items</button>
                 <button onclick="switchType('sale', this)" class="type-filter-btn px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'sale' ? 'bg-primary-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-primary-50'; ?> border border-gray-100">For Sale</button>
-                <button onclick="switchType('swap', this)" class="type-filter-btn px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'swap' ? 'bg-blue-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-blue-50'; ?> border border-gray-100">Swap/Barter</button>
+                <button onclick="switchType('swap', this)" class="type-filter-btn px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition <?php echo $type == 'swap' ? 'bg-primary-600 text-white shadow-xl' : 'bg-white text-gray-500 hover:bg-primary-50'; ?> border border-gray-100">Swap/Barter</button>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
@@ -586,10 +586,10 @@ function switchCategory(slug, id, el) {
 function switchType(type, el) {
     currentType = type;
     document.querySelectorAll(".type-filter-btn").forEach(btn => {
-        btn.classList.remove("bg-primary-600", "bg-blue-600", "text-white", "shadow-xl");
+        btn.classList.remove("bg-primary-600", "text-white", "shadow-xl");
         btn.classList.add("bg-white", "text-gray-500", "hover:bg-primary-50");
     });
-    const colorClass = type === "swap" ? "bg-blue-600" : "bg-primary-600";
+    const colorClass = "bg-primary-600";
     el.classList.add(colorClass, "text-white", "shadow-xl");
     el.classList.remove("bg-white", "text-gray-500", "hover:bg-primary-50");
 

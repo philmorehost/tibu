@@ -174,6 +174,10 @@ if (isset($pdo)) {
             </div>
 
             <div class="flex items-center space-x-2 md:space-x-4">
+                <a href="/packages.php" class="text-purple-600 hover:text-purple-700 font-bold flex flex-col items-center">
+                    <i class="fas fa-gem text-xl md:text-base md:mr-1"></i>
+                    <span class="hidden md:inline">Packages</span>
+                </a>
                 <?php if (is_user_logged_in()): ?>
                     <a href="/profile" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
                         <i class="fas fa-user text-xl md:text-base md:mr-1"></i>
