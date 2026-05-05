@@ -35,9 +35,6 @@ $stmt = $pdo->prepare("SELECT image_path, is_main FROM ad_images WHERE ad_id = ?
 $stmt->execute([$id]);
 $images = $stmt->fetchAll();
 
-// Calculate Deal Safety Score (Feature 08)
-$safety_score = calculate_safety_score(['verification_tier' => $ad['verification_tier'], 'is_verified' => $ad['is_verified'], 'created_at' => $ad['seller_created_at']], $ad);
-
 // SEO Meta Data
 $meta = generate_meta_tags($ad['title'], $ad['description'], $ad['cat_name'] . " " . $ad['state_name']);
 $page_title = $meta['title'] . " - " . ($settings['site_name'] ?? 'Classifieds');
@@ -156,14 +153,17 @@ include __DIR__ . '/templates/header.php';
                                 $pkg_features = $stmt_pkg->fetch();
                                 ?>
 
-                                <?php
-                                $color = $safety_score >= 80 ? "green" : ($safety_score >= 50 ? "yellow" : "red");
-                                $icon = $safety_score >= 80 ? "fa-shield-alt" : "fa-exclamation-circle";
-                                ?>
-                                <div class="flex items-center gap-2 bg-<?php echo $color; ?>-50 px-4 py-2 rounded-xl border border-<?php echo $color; ?>-100 shadow-sm">
-                                    <i class="fas <?php echo $icon; ?> text-<?php echo $color; ?>-500 text-xs"></i>
-                                    <span class="text-[10px] font-black text-<?php echo $color; ?>-700 uppercase tracking-widest">Deal Safety: <?php echo $safety_score; ?>/100</span>
-                                </div>
+                                <?php if ($ad['is_verified']): ?>
+                                    <div class="flex items-center gap-2 bg-primary-50 px-4 py-2 rounded-xl border border-primary-100 shadow-sm">
+                                        <i class="fas fa-shield-alt text-primary-600 text-xs"></i>
+                                        <span class="text-[10px] font-black text-primary-700 uppercase tracking-widest">Verified Seller</span>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="flex items-center gap-2 bg-red-50 px-4 py-2 rounded-xl border border-red-100 shadow-sm">
+                                        <i class="fas fa-shield-alt text-red-500 text-xs"></i>
+                                        <span class="text-[10px] font-black text-red-700 uppercase tracking-widest">Unverified Seller</span>
+                                    </div>
+                                <?php endif; ?>
 
                                 <?php
                                 $stmt_prop = $pdo->prepare("SELECT * FROM property_declarations WHERE ad_id = ?");
