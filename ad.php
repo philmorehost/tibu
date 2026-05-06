@@ -631,21 +631,27 @@ function closePhoneModal() {
     document.getElementById("phoneModal").classList.remove("flex");
 }
 function revealNumber() {
-    const fullPhone = "<?php echo h($ad["seller_phone"] ?? ''); ?>";
-    if (!fullPhone) {
+    const fullPhone = <?php echo json_encode($ad["seller_phone"] ?? ''); ?>;
+    if (!fullPhone || fullPhone.trim() === "") {
         alert('Phone number not available for this seller.');
         closePhoneModal();
         return;
     }
 
     // Update main page blurred number
-    document.getElementById("blurredPhone").textContent = fullPhone;
+    const blurredEl = document.getElementById("blurredPhone");
+    if (blurredEl) blurredEl.textContent = fullPhone;
 
     // Update modal UI
-    document.getElementById("revealedPhoneNumber").textContent = fullPhone;
-    document.getElementById("revealedPhoneLink").href = "tel:" + fullPhone.replace(/\D/g, '');
-    document.getElementById("revealedPhoneContainer").classList.remove("hidden");
-    document.getElementById("showNumberBtn").classList.add("hidden");
+    const revealedNumEl = document.getElementById("revealedPhoneNumber");
+    const revealedLinkEl = document.getElementById("revealedPhoneLink");
+    const revealedContEl = document.getElementById("revealedPhoneContainer");
+    const showBtnEl = document.getElementById("showNumberBtn");
+
+    if (revealedNumEl) revealedNumEl.textContent = fullPhone;
+    if (revealedLinkEl) revealedLinkEl.href = "tel:" + fullPhone.replace(/\D/g, '');
+    if (revealedContEl) revealedContEl.classList.remove("hidden");
+    if (showBtnEl) showBtnEl.classList.add("hidden");
 
     // Auto-dial attempt if mobile
     if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {

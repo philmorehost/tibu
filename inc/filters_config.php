@@ -15,17 +15,25 @@ function get_category_filters($cat_name) {
                 'label' => 'Price Range (₦)',
                 'type' => 'range',
                 'quick_ranges' => [
-                    ['label' => 'Under ₦5.3M', 'min' => 0, 'max' => 5300000],
-                    ['label' => '5.3M–13M', 'min' => 5300000, 'max' => 13000000],
-                    ['label' => '13M–28M', 'min' => 13000000, 'max' => 28000000],
-                    ['label' => '28M–92M', 'min' => 28000000, 'max' => 92000000],
-                    ['label' => '92M+', 'min' => 92000000, 'max' => 99999999999]
+                    ['label' => '< ₦6.7M', 'min' => 0, 'max' => 6700000],
+                    ['label' => '₦6.7–11M', 'min' => 6700000, 'max' => 11000000],
+                    ['label' => '₦11–18M', 'min' => 11000000, 'max' => 18000000],
+                    ['label' => '> ₦18M', 'min' => 18000000, 'max' => 99999999999]
                 ]
             ],
             'make' => [
                 'label' => 'Make (Brand)',
                 'type' => 'select',
                 'searchable' => true,
+                'quick_brands' => [
+                    ['name' => 'Toyota', 'logo' => 'https://www.carlogos.org/car-logos/toyota-logo-2020-500x281.png'],
+                    ['name' => 'Mercedes-Benz', 'logo' => 'https://www.carlogos.org/car-logos/mercedes-benz-logo-2011-640x510.png'],
+                    ['name' => 'Lexus', 'logo' => 'https://www.carlogos.org/car-logos/lexus-logo-2022-640x336.png'],
+                    ['name' => 'Honda', 'logo' => 'https://www.carlogos.org/car-logos/honda-logo-2000-640x535.png'],
+                    ['name' => 'Hyundai', 'logo' => 'https://www.carlogos.org/car-logos/hyundai-logo-2011-640x323.png'],
+                    ['name' => 'Acura', 'logo' => 'https://www.carlogos.org/car-logos/acura-logo-2002-640x546.png'],
+                    ['name' => 'Ford', 'logo' => 'https://www.carlogos.org/car-logos/ford-logo-2017-640x264.png']
+                ],
                 'options' => [
                     'Toyota', 'Mercedes-Benz', 'Lexus', 'Honda', 'Hyundai', 'Acura', 'Audi', 'BMW', 'BYD', 'Bentley',
                     'Cadillac', 'Changan', 'Chevrolet', 'Chrysler', 'Dodge', 'Ford', 'GAC', 'Geely', 'GMC', 'Infiniti',

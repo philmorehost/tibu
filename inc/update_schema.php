@@ -331,7 +331,11 @@ $missing_tables = [
 ];
 
 foreach ($missing_tables as $sql) {
-    try { $pdo->exec($sql); } catch (Exception $e) {}
+    try {
+        $pdo->exec($sql);
+    } catch (Exception $e) {
+        error_log("Schema update failed for SQL: $sql. Error: " . $e->getMessage());
+    }
 }
 
 // Data Migration: is_featured to ad_tier

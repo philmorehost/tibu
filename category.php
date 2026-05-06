@@ -265,15 +265,23 @@ include __DIR__ . '/templates/header.php';
 
         <!-- Main Content -->
         <div class="flex-1">
-            <div class="bg-gradient-to-r from-primary-600 to-primary-700 rounded-3xl p-8 text-white mb-8 shadow-xl relative overflow-hidden">
-                <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
-                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="bg-white rounded-3xl p-8 mb-8 shadow-sm border border-gray-100">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div>
-                        <h1 class="text-3xl font-black mb-2 uppercase tracking-tighter"><?php echo h($category['name']); ?></h1>
-                        <p class="text-primary-100 font-bold opacity-80 text-sm">Showing verified listings in <?php echo h($category['name']); ?></p>
+                        <h1 class="text-3xl font-black mb-2 uppercase tracking-tighter text-gray-800"><?php echo h($category['name']); ?> in Nigeria</h1>
+                        <p class="text-gray-400 font-bold text-sm">Showing verified listings</p>
                     </div>
-                    <a href="/post-ad?cat_id=<?php echo $cat_id; ?>" class="bg-yellow-500 text-white px-8 py-4 rounded-2xl font-black hover:bg-yellow-400 transition shadow-lg text-xs uppercase tracking-widest">SELL HERE</a>
+                    <a href="/post-ad?cat_id=<?php echo $cat_id; ?>" class="bg-primary-600 text-white px-8 py-4 rounded-2xl font-black hover:bg-primary-700 transition shadow-lg text-xs uppercase tracking-widest">SELL YOURS</a>
                 </div>
+            </div>
+
+            <!-- Quick Filters (Jiji Style) -->
+            <div id="quickFiltersContainer" class="mb-10 space-y-8 hidden">
+                <!-- Price Quick Ranges -->
+                <div id="priceQuickRanges" class="flex flex-wrap gap-2"></div>
+
+                <!-- Brand Quick Selection -->
+                <div id="brandQuickSelection" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3"></div>
             </div>
 
             <!-- Horizontal Filter Bar (Type Selection) -->
@@ -337,35 +345,77 @@ include __DIR__ . '/templates/header.php';
 <script>
 function loadFilters(catId) {
     const filterContainer = document.getElementById('dynamic_filters');
+    const quickFiltersContainer = document.getElementById('quickFiltersContainer');
+    const priceQuick = document.getElementById('priceQuickRanges');
+    const brandQuick = document.getElementById('brandQuickSelection');
+
     if (!catId) {
         filterContainer.innerHTML = '';
+        quickFiltersContainer.classList.add('hidden');
         return;
     }
 
-    fetch('api/filters.php?cat_id=' + catId)
+    fetch('/api/filters.php?cat_id=' + catId)
         .then(response => response.json())
         .then(filters => {
             let html = '';
+            let hasQuickFilters = false;
             const currentExtra = <?php echo json_encode($extra); ?>;
+            const currentMinPrice = '<?php echo $min_price ?: ''; ?>';
+            const currentMaxPrice = '<?php echo $max_price ?: ''; ?>';
+
+            priceQuick.innerHTML = '';
+            brandQuick.innerHTML = '';
+
             for (let key in filters) {
                 const f = filters[key];
+
+                // Handle Price Quick Ranges
+                if (key === 'price' && f.quick_ranges) {
+                    hasQuickFilters = true;
+                    f.quick_ranges.forEach(range => {
+                        const active = (currentMinPrice == range.min && currentMaxPrice == range.max);
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.onclick = () => setQuickRange('price', range.min, range.max);
+                        btn.className = `px-6 py-3 rounded-xl text-xs font-black transition-all border ${active ? 'bg-primary-600 text-white border-primary-600 shadow-lg' : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200'}`;
+                        btn.textContent = range.label;
+                        priceQuick.appendChild(btn);
+                    });
+                }
+
+                // Handle Make Quick Selection
+                if (key === 'make' && f.quick_brands) {
+                    hasQuickFilters = true;
+                    f.quick_brands.forEach(brand => {
+                        const active = (currentExtra['make'] == brand.name);
+                        const card = document.createElement('button');
+                        card.type = 'button';
+                        card.onclick = () => setQuickBrand(brand.name);
+                        card.className = `flex flex-col items-center justify-center p-4 bg-white rounded-2xl border transition-all hover:shadow-md ${active ? 'border-primary-600 ring-2 ring-primary-50' : 'border-gray-100'}`;
+                        card.innerHTML = `
+                            <div class="w-12 h-12 mb-3 flex items-center justify-center">
+                                <img src="${brand.logo}" alt="${brand.name}" class="max-w-full max-h-full object-contain ${active ? '' : 'grayscale opacity-70'}">
+                            </div>
+                            <span class="text-[10px] font-black text-gray-800 uppercase tracking-tighter">${brand.name}</span>
+                        `;
+                        brandQuick.appendChild(card);
+                    });
+                }
+
+                // Regular Filters in Sidebar
                 html += '<div class="filter-group" data-filter-key="'+key+'">';
                 html += `<label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">${f.label}</label>`;
 
                 const val = currentExtra[key] || '';
 
                 if (key === 'price') {
-                    if (f.quick_ranges) {
-                        const priceQuick = document.getElementById('price_quick_ranges');
-                        let phtml = '';
-                        const min_val = '<?php echo $min_price ?: ''; ?>';
-                        const max_val = '<?php echo $max_price ?: ''; ?>';
-                        f.quick_ranges.forEach(range => {
-                            const active = (min_val == range.min && max_val == range.max) ? 'bg-primary-600 text-white shadow-md' : 'bg-white text-gray-500 border border-gray-100 hover:bg-primary-50';
-                            phtml += `<button type="button" onclick="setQuickRange('price', ${range.min}, ${range.max})" class="px-2 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-tighter transition-all ${active}">${range.label}</button>`;
-                        });
-                        priceQuick.innerHTML = phtml;
-                    }
+                    // Price inputs are always in sidebar
+                    html += `<div class="grid grid-cols-2 gap-2 mb-3">
+                        <input type="number" name="min_price" value="${currentMinPrice}" placeholder="Min" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
+                        <input type="number" name="max_price" value="${currentMaxPrice}" placeholder="Max" class="w-full p-3 bg-gray-50 border-none rounded-xl text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition" onchange="updateAds()">
+                    </div>`;
+                    html += '</div>';
                     continue;
                 }
 
@@ -438,6 +488,13 @@ function loadFilters(catId) {
 
                 html += '</div>';
             }
+
+            if (hasQuickFilters) {
+                quickFiltersContainer.classList.remove('hidden');
+            } else {
+                quickFiltersContainer.classList.add('hidden');
+            }
+
             filterContainer.innerHTML = html;
         });
 }
@@ -455,7 +512,20 @@ function setQuickRange(key, min, max) {
     if (minInput && maxInput) {
         minInput.value = min;
         maxInput.value = max;
-        minInput.form.submit();
+        updateAds();
+    }
+}
+
+function setQuickBrand(brandName) {
+    // Find the make select in the sidebar
+    const makeSelect = document.querySelector('select[name="extra[make]"]');
+    if (makeSelect) {
+        if (makeSelect.value === brandName) {
+            makeSelect.value = ''; // Toggle off
+        } else {
+            makeSelect.value = brandName;
+        }
+        updateAds();
     }
 }
 
