@@ -169,7 +169,7 @@ include __DIR__ . '/templates/header.php';
                         <select name="type" onchange="updateAds()" class="w-full p-3 bg-gray-50 border-none rounded-xl text-sm font-bold text-gray-700 focus:ring-2 focus:ring-primary-500 transition">
                             <option value="all" <?php echo $type == 'all' ? 'selected' : ''; ?>>All Types</option>
                             <option value="sale" <?php echo $type == 'sale' ? 'selected' : ''; ?>>For Sale</option>
-                            <option value="swap" <?php echo $type == 'swap' ? 'selected' : ''; ?>>For Swap</option>
+                            <option value="swap" <?php echo $type == 'swap' ? 'selected' : ''; ?>>Swap/Barter</option>
                         </select>
                     </div>
 

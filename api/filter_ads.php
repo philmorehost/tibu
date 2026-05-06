@@ -111,9 +111,14 @@ $query .= " ORDER BY CASE a.ad_tier
             WHEN 'premium' THEN 3
             ELSE 4 END ASC, a.bumped_at DESC LIMIT 40";
 
-$stmt = $pdo->prepare($query);
-$stmt->execute($params);
-$ads = $stmt->fetchAll();
+try {
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $ads = $stmt->fetchAll();
+} catch (Exception $e) {
+    error_log("Filter Ads API error: " . $e->getMessage());
+    $ads = [];
+}
 
 // Process ads for frontend
 foreach ($ads as &$ad) {

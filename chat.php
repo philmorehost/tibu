@@ -44,26 +44,35 @@ if ($ad_id > 0) {
     }
 
     // Mark messages as read
-    $stmt = $pdo->prepare("UPDATE messages SET is_read = 1 WHERE ad_id = ? AND receiver_id = ? AND sender_id = ?");
-    $stmt->execute([$ad_id, $user_id, $receiver_id]);
+    try {
+        $stmt = $pdo->prepare("UPDATE messages SET is_read = 1 WHERE ad_id = ? AND receiver_id = ? AND sender_id = ?");
+        $stmt->execute([$ad_id, $user_id, $receiver_id]);
+    } catch (Exception $e) {
+        error_log("Failed to update message read status: " . $e->getMessage());
+    }
 
 } else {
     // INBOX MODE
     // Get unique conversations: unique pairs of (ad_id, other_user)
-    $stmt = $pdo->prepare("
-        SELECT m.*, a.title as ad_title, u.full_name as other_name,
-        (SELECT COUNT(*) FROM messages WHERE ad_id = m.ad_id AND receiver_id = ? AND sender_id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END) AND is_read = 0) as unread_count
-        FROM messages m
-        JOIN ads a ON m.ad_id = a.id
-        JOIN users u ON u.id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END)
-        WHERE (m.sender_id = ? OR m.receiver_id = ?)
-        AND m.id IN (
-            SELECT MAX(id) FROM messages WHERE (sender_id = ? OR receiver_id = ?) GROUP BY ad_id, (CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END)
-        )
-        ORDER BY m.created_at DESC
-    ");
-    $stmt->execute([$user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id]);
-    $conversations = $stmt->fetchAll();
+    try {
+        $stmt = $pdo->prepare("
+            SELECT m.*, a.title as ad_title, u.full_name as other_name,
+            (SELECT COUNT(*) FROM messages WHERE ad_id = m.ad_id AND receiver_id = ? AND sender_id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END) AND is_read = 0) as unread_count
+            FROM messages m
+            JOIN ads a ON m.ad_id = a.id
+            JOIN users u ON u.id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END)
+            WHERE (m.sender_id = ? OR m.receiver_id = ?)
+            AND m.id IN (
+                SELECT MAX(id) FROM messages WHERE (sender_id = ? OR receiver_id = ?) GROUP BY ad_id, (CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END)
+            )
+            ORDER BY m.created_at DESC
+        ");
+        $stmt->execute([$user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id]);
+        $conversations = $stmt->fetchAll();
+    } catch (Exception $e) {
+        $conversations = [];
+        error_log("Failed to fetch conversations: " . $e->getMessage());
+    }
 }
 
 include __DIR__ . '/templates/header.php';
@@ -83,20 +92,25 @@ include __DIR__ . '/templates/header.php';
                     $sidebar_conversations = $conversations;
                 } else {
                     // Re-fetch for sidebar when in chat mode
-                    $stmt = $pdo->prepare("
-                        SELECT m.*, a.title as ad_title, u.full_name as other_name,
-                        (SELECT COUNT(*) FROM messages WHERE ad_id = m.ad_id AND receiver_id = ? AND sender_id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END) AND is_read = 0) as unread_count
-                        FROM messages m
-                        JOIN ads a ON m.ad_id = a.id
-                        JOIN users u ON u.id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END)
-                        WHERE (m.sender_id = ? OR m.receiver_id = ?)
-                        AND m.id IN (
-                            SELECT MAX(id) FROM messages WHERE (sender_id = ? OR receiver_id = ?) GROUP BY ad_id, (CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END)
-                        )
-                        ORDER BY m.created_at DESC
-                    ");
-                    $stmt->execute([$user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id]);
-                    $sidebar_conversations = $stmt->fetchAll();
+                    try {
+                        $stmt = $pdo->prepare("
+                            SELECT m.*, a.title as ad_title, u.full_name as other_name,
+                            (SELECT COUNT(*) FROM messages WHERE ad_id = m.ad_id AND receiver_id = ? AND sender_id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END) AND is_read = 0) as unread_count
+                            FROM messages m
+                            JOIN ads a ON m.ad_id = a.id
+                            JOIN users u ON u.id = (CASE WHEN m.sender_id = ? THEN m.receiver_id ELSE m.sender_id END)
+                            WHERE (m.sender_id = ? OR m.receiver_id = ?)
+                            AND m.id IN (
+                                SELECT MAX(id) FROM messages WHERE (sender_id = ? OR receiver_id = ?) GROUP BY ad_id, (CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END)
+                            )
+                            ORDER BY m.created_at DESC
+                        ");
+                        $stmt->execute([$user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id, $user_id]);
+                        $sidebar_conversations = $stmt->fetchAll();
+                    } catch (Exception $e) {
+                        $sidebar_conversations = [];
+                        error_log("Failed to fetch sidebar conversations: " . $e->getMessage());
+                    }
                 }
 
                 if (empty($sidebar_conversations)): ?>
@@ -159,9 +173,14 @@ include __DIR__ . '/templates/header.php';
                 <!-- Messages -->
                 <div id="chatBox" class="flex-1 overflow-y-auto p-6 space-y-6 bg-gray-50/30">
                     <?php
-                    $stmt = $pdo->prepare("SELECT * FROM messages WHERE ad_id = ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) ORDER BY created_at ASC");
-                    $stmt->execute([$ad_id, $user_id, $receiver_id, $receiver_id, $user_id]);
-                    $messages = $stmt->fetchAll();
+                    try {
+                        $stmt = $pdo->prepare("SELECT * FROM messages WHERE ad_id = ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) ORDER BY created_at ASC");
+                        $stmt->execute([$ad_id, $user_id, $receiver_id, $receiver_id, $user_id]);
+                        $messages = $stmt->fetchAll();
+                    } catch (Exception $e) {
+                        $messages = [];
+                        error_log("Failed to fetch messages: " . $e->getMessage());
+                    }
 
                     $last_date = "";
                     foreach ($messages as $msg):

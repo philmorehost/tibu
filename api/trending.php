@@ -32,7 +32,12 @@ $query .= " ORDER BY CASE a.ad_tier
             WHEN 'premium' THEN 3
             ELSE 4 END ASC, a.bumped_at DESC LIMIT 20";
 
-$ads = $pdo->query($query)->fetchAll();
+try {
+    $ads = $pdo->query($query)->fetchAll();
+} catch (Exception $e) {
+    error_log("Trending API error: " . $e->getMessage());
+    $ads = [];
+}
 
 foreach ($ads as &$ad) {
     $ad['url'] = generate_ad_url($ad);

@@ -9,6 +9,15 @@ if (!isset($pdo)) {
 }
 if (!isset($pdo)) return;
 
+// Check if messages table exists - if not, clear session to force sync
+if (isset($_SESSION["schema_verified"])) {
+    try {
+        $pdo->query("SELECT 1 FROM messages LIMIT 1");
+    } catch (Exception $e) {
+        unset($_SESSION["schema_verified"]);
+    }
+}
+
 if (isset($_SESSION["schema_verified"])) return;
 
 $tables = [
@@ -297,7 +306,10 @@ $missing_tables = [
         ad_id INT NOT NULL,
         message TEXT NOT NULL,
         is_read TINYINT(1) DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX (sender_id),
+        INDEX (receiver_id),
+        INDEX (ad_id)
     )",
     "CREATE TABLE IF NOT EXISTS search_history (
         id INT AUTO_INCREMENT PRIMARY KEY,

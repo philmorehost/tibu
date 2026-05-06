@@ -632,6 +632,7 @@ function closePhoneModal() {
 }
 function revealNumber() {
     const fullPhone = <?php echo json_encode($ad["seller_phone"] ?? ''); ?>;
+    console.log("Revealing phone number:", fullPhone);
     if (!fullPhone || fullPhone.trim() === "") {
         alert('Phone number not available for this seller.');
         closePhoneModal();
@@ -640,7 +641,9 @@ function revealNumber() {
 
     // Update main page blurred number
     const blurredEl = document.getElementById("blurredPhone");
-    if (blurredEl) blurredEl.textContent = fullPhone;
+    if (blurredEl) {
+        blurredEl.textContent = fullPhone;
+    }
 
     // Update modal UI
     const revealedNumEl = document.getElementById("revealedPhoneNumber");
@@ -655,7 +658,9 @@ function revealNumber() {
 
     // Auto-dial attempt if mobile
     if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        window.location.href = "tel:" + fullPhone.replace(/\D/g, '');
+        setTimeout(() => {
+            window.location.href = "tel:" + fullPhone.replace(/\D/g, '');
+        }, 100);
     }
 }
 </script>
