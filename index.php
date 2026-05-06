@@ -249,7 +249,7 @@ window.addEventListener('load', () => {
                             <img src="<?php echo $ad_img; ?>">
                             <span class="absolute top-2 left-2 <?php echo $tier_info['badge'] ?? 'bg-yellow-500'; ?> text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase z-10"><?php echo $tier_info['label'] ?? 'Featured'; ?></span>
                             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                                <span class="absolute top-2 right-2 bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase shadow-sm z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</span>
+                                <span class="absolute top-2 right-2 bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase shadow-sm z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</span>
                             <?php endif; ?>
                         </div>
                         <div class="p-3">
@@ -263,61 +263,91 @@ window.addEventListener('load', () => {
             </section>
             <?php endif; ?>
 
-            <!-- Recommendations Section (Based on History) -->
+            <!-- Recommendations & New For You Section (Based on History) -->
             <?php
             $recommended_ads = [];
-            if (is_user_logged_in()) {
-                $uid = $_SESSION['user_id'];
-                // Get last search category or keyword
+            $uid = $_SESSION['user_id'] ?? null;
+            $last = null;
+
+            if ($uid) {
+                // Get last search from DB
                 $history = $pdo->prepare("SELECT keyword, cat_id FROM search_history WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
                 $history->execute([$uid]);
                 $last = $history->fetch();
+            } elseif (isset($_SESSION['search_history']) && !empty($_SESSION['search_history'])) {
+                // Get last search from Session
+                $last = $_SESSION['search_history'][0];
+            }
 
-                if ($last) {
-                    $rec_query = "SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id = a.id AND is_main = 1 LIMIT 1) as image, s.name as state_name, c.name as cat_name
-                                 FROM ads a
-                                 JOIN states s ON a.state_id = s.id
-                                 JOIN categories c ON a.cat_id = c.id
-                                 JOIN users u ON a.user_id = u.id
-                                 WHERE a.status = 'active' AND u.is_suspended = 0 AND a.id NOT IN (SELECT id FROM ads WHERE user_id = ?)";
-                    $rec_params = [$uid];
+            if ($last) {
+                $rec_query = "SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id = a.id AND is_main = 1 LIMIT 1) as image, s.name as state_name, c.name as cat_name
+                             FROM ads a
+                             JOIN states s ON a.state_id = s.id
+                             JOIN categories c ON a.cat_id = c.id
+                             JOIN users u ON a.user_id = u.id
+                             WHERE a.status = 'active' AND u.is_suspended = 0";
+                $rec_params = [];
 
-                    if ($last['cat_id']) {
-                        $rec_query .= " AND a.cat_id = ?";
-                        $rec_params[] = $last['cat_id'];
-                    } elseif ($last['keyword']) {
-                        $rec_query .= " AND a.title LIKE ?";
-                        $rec_params[] = "%".$last['keyword']."%";
-                    }
-
-                    $rec_query .= " ORDER BY RAND() LIMIT 4";
-                    $rec_stmt = $pdo->prepare($rec_query);
-                    $rec_stmt->execute($rec_params);
-                    $recommended_ads = $rec_stmt->fetchAll();
+                if ($uid) {
+                    // Exclude ads posted by user or already visited (authenticated)
+                    $rec_query .= " AND a.user_id != ? AND a.id NOT IN (SELECT ad_id FROM seller_analytics WHERE viewer_id = ?)";
+                    $rec_params[] = $uid;
+                    $rec_params[] = $uid;
+                } elseif (isset($_SESSION['visited_ads']) && !empty($_SESSION['visited_ads'])) {
+                    // Exclude visited ads (guest session)
+                    $placeholders = implode(',', array_fill(0, count($_SESSION['visited_ads']), '?'));
+                    $rec_query .= " AND a.id NOT IN ($placeholders)";
+                    foreach ($_SESSION['visited_ads'] as $vid) $rec_params[] = $vid;
                 }
+
+                if ($last['cat_id']) {
+                    $rec_query .= " AND a.cat_id = ?";
+                    $rec_params[] = $last['cat_id'];
+                } elseif ($last['keyword']) {
+                    $rec_query .= " AND a.title LIKE ?";
+                    $rec_params[] = "%".$last['keyword']."%";
+                }
+
+                $rec_query .= " ORDER BY a.created_at DESC LIMIT 8";
+                $rec_stmt = $pdo->prepare($rec_query);
+                $rec_stmt->execute($rec_params);
+                $recommended_ads = $rec_stmt->fetchAll();
             }
             ?>
 
             <?php if ($recommended_ads): ?>
             <section class="mb-16">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="w-2 h-8 bg-blue-500 rounded-full"></div>
-                    <h3 class="text-xl md:text-2xl font-black text-gray-800 uppercase tracking-tighter">Recommended For You</h3>
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-8 bg-blue-600 rounded-full shadow-[0_0_10px_rgba(37,99,235,0.4)]"></div>
+                        <h3 class="text-xl md:text-2xl font-black text-gray-800 uppercase tracking-tighter italic">New for You</h3>
+                    </div>
+                    <span class="bg-blue-50 text-blue-600 text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest">Based on your interests</span>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    <?php foreach ($recommended_ads as $ad): ?>
-                    <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition border border-blue-50">
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <?php foreach ($recommended_ads as $ad):
+                        $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
+                    ?>
+                    <a href="<?php echo generate_ad_url($ad); ?>" class="bg-white rounded-[2rem] shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative <?php echo $tier_info['border'] ?? ''; ?>">
+                        <?php if ($tier_info['shimmer'] ?? false): ?>
+                            <div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>
+                        <?php endif; ?>
                         <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
-                        <div class="relative h-40 fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
-                            <img src="<?php echo $ad_img; ?>">
+                        <div class="relative h-48 fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
+                            <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
                             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                                <span class="absolute top-2 right-2 bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase shadow-sm"><i class="fas fa-sync-alt mr-1"></i> Swap</span>
+                                <span class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</span>
                             <?php endif; ?>
+                            <div class="absolute bottom-4 left-4">
+                                <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase"><?php echo h($ad['cat_name']); ?></span>
+                            </div>
                         </div>
-                        <div class="p-3">
-                            <h4 class="text-sm font-bold text-gray-800 line-clamp-2 h-10 mb-2"><?php echo h($ad['title']); ?></h4>
-                            <p class="text-primary-600 font-bold mb-2">₦<?php echo number_format($ad['price']); ?></p>
-                            <p class="text-[10px] text-gray-400 font-bold"><i class="fas fa-map-marker-alt"></i> <?php echo h($ad['state_name']); ?></p>
+                        <div class="p-6">
+                            <h4 class="text-xs font-black text-gray-800 line-clamp-2 h-8 mb-4 group-hover:text-primary-600 transition"><?php echo h($ad['title']); ?></h4>
+                            <div class="flex justify-between items-center">
+                                <p class="text-primary-600 font-black text-lg">₦<?php echo number_format($ad['price']); ?></p>
+                                <span class="text-[9px] text-gray-400 font-bold uppercase tracking-widest"><i class="fas fa-map-marker-alt text-primary-500 mr-1"></i> <?php echo h($ad['state_name']); ?></span>
+                            </div>
                         </div>
                     </a>
                     <?php endforeach; ?>
@@ -383,7 +413,7 @@ window.addEventListener('load', () => {
                                 <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
                             <?php endif; ?>
                             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                                <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                                <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</div>
                             <?php endif; ?>
                         </div>
                         <div class="p-6">
@@ -553,7 +583,7 @@ function filterTrending(catId, type = 'all') {
                     <div class="h-48 md:h-64 overflow-hidden relative fit-to-frame" style="--bg-image: url('${ad.image ? '/uploads/ads/'+ad.image : 'https://placehold.co/400x300?text=No+Image'}')">
                         <img src="${ad.image ? '/uploads/ads/'+ad.image : 'https://placehold.co/400x300?text=No+Image'}" class="group-hover:scale-110 transition duration-700">
                         ${badge}
-                        ${ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>' : ''}
+                        ${ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</div>' : ''}
                     </div>
                     <div class="p-4 md:p-6">
                         <h4 class="text-xs md:text-sm font-black text-gray-800 line-clamp-2 h-8 md:h-10 mb-2 md:mb-4 group-hover:text-primary-600 transition">${ad.title}</h4>

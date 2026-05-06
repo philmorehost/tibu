@@ -6,6 +6,9 @@ require_once __DIR__ . '/inc/user_auth.php';
 
 $q = $_GET['q'] ?? '';
 $cat_id = (int)($_GET['cat_id'] ?? 0);
+if ($q || $cat_id) {
+    record_search_history($cat_id, $q);
+}
 $state_id = (int)($_GET['state_id'] ?? 0);
 $lga_id = (int)($_GET['lga_id'] ?? 0);
 $min_price = (float)($_GET['min_price'] ?? 0);
@@ -273,7 +276,7 @@ function renderAds(ads) {
         const border = tier ? tier.border : '';
         const shimmer = (tier && tier.shimmer) ? '<div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>' : '';
         const badge = tier ? `<div class="absolute top-4 left-4 ${tier.badge} text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">${tier.label}</div>` : '';
-        const swap = ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>' : '';
+        const swap = ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</div>' : '';
 
         return `
             <a href="${ad.url}" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative ${border} fade-in-up" style="animation-delay: ${index * 0.05}s">

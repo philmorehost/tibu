@@ -27,6 +27,15 @@ if (!$ad || ($ad['status'] !== 'active' && (!isset($_SESSION['user_id']) || $_SE
 $viewer_id = $_SESSION["user_id"] ?? null;
 $pdo->prepare("INSERT INTO seller_analytics (ad_id, viewer_id, source, ip_address) VALUES (?, ?, ?, ?)")->execute([$id, $viewer_id, $_GET["source"] ?? "direct", get_client_ip()]);
 
+// Track visited ads for guests to support "New for You" suggestions
+if (!isset($_SESSION['user_id'])) {
+    if (!isset($_SESSION['visited_ads'])) $_SESSION['visited_ads'] = [];
+    if (!in_array($id, $_SESSION['visited_ads'])) {
+        $_SESSION['visited_ads'][] = $id;
+        if (count($_SESSION['visited_ads']) > 50) array_shift($_SESSION['visited_ads']);
+    }
+}
+
 // Increment views
 $pdo->prepare("UPDATE ads SET views = views + 1 WHERE id = ?")->execute([$id]);
 
@@ -484,7 +493,7 @@ include __DIR__ . '/templates/header.php';
                         <span class="absolute top-4 left-4 bg-yellow-400 text-yellow-900 text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">Premium</span>
                     <?php endif; ?>
                     <?php if (($s_ad['listing_type'] ?? '') !== 'for_sale'): ?>
-                        <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                        <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</div>
                     <?php endif; ?>
                 </div>
                 <div class="p-6">

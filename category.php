@@ -14,6 +14,7 @@ if (!$category) {
 }
 
 $cat_id = $category['id'];
+record_search_history($cat_id);
 $parent_id = $category['parent_id'];
 $type = $_GET['type'] ?? 'all';
 $state_id = (int)($_GET['state_id'] ?? 0);
@@ -311,7 +312,7 @@ include __DIR__ . '/templates/header.php';
                             <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
                         <?php endif; ?>
                         <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                            <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                            <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</div>
                         <?php endif; ?>
                         <div class="absolute bottom-4 left-4">
                             <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase"><?php echo h($ad['cat_name']); ?></span>
@@ -372,6 +373,25 @@ function loadFilters(catId) {
             const currentMinPrice = formData.get('min_price') || '<?php echo $min_price ?: ""; ?>';
             const currentMaxPrice = formData.get('max_price') || '<?php echo $max_price ?: ""; ?>';
             const currentExtraMake = formData.get('extra[make]') || '<?php echo $extra['make'] ?? ""; ?>';
+
+            // Reconstruct currentExtra from formData for the loop below
+            const currentExtra = {};
+            // Start with initial PHP values
+            const initialExtra = <?php echo json_encode($extra); ?>;
+            for (let k in initialExtra) currentExtra[k] = initialExtra[k];
+
+            for (let [formKey, formValue] of formData.entries()) {
+                if (formKey.startsWith('extra[')) {
+                    let key = formKey.substring(6).split(']')[0];
+                    let isArray = formKey.includes('[]');
+                    if (isArray) {
+                         if (!Array.isArray(currentExtra[key])) currentExtra[key] = [];
+                         if (!currentExtra[key].includes(formValue)) currentExtra[key].push(formValue);
+                    } else {
+                        currentExtra[key] = formValue;
+                    }
+                }
+            }
 
             priceQuick.innerHTML = '';
             brandQuick.innerHTML = '';
@@ -731,7 +751,7 @@ function renderAds(ads) {
         const border = tier ? tier.border : '';
         const shimmer = (tier && tier.shimmer) ? '<div class="absolute inset-0 shimmer-effect z-10 pointer-events-none"></div>' : '';
         const badge = tier ? `<div class="absolute top-4 left-4 ${tier.badge} text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10">${tier.label}</div>` : '';
-        const swap = ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>' : '';
+        const swap = ad.listing_type !== 'for_sale' ? '<div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</div>' : '';
 
         return `
             <a href="${ad.url}" class="bg-white rounded-2xl md:rounded-3xl shadow-sm overflow-hidden hover:shadow-2xl transition-all duration-500 border border-gray-100 group relative ${border} fade-in-up" style="animation-delay: ${index * 0.05}s">

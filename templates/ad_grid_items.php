@@ -13,7 +13,7 @@
                 <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
             <?php endif; ?>
             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
-                <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</div>
             <?php endif; ?>
             <div class="absolute bottom-4 left-4">
                 <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase"><?php echo h($ad['cat_name']); ?></span>

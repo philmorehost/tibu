@@ -57,6 +57,31 @@ function get_client_ip() {
 }
 
 /**
+ * Record Search History for Personalized Recommendations
+ */
+function record_search_history($cat_id = null, $keyword = null) {
+    global $pdo;
+    if (!$cat_id && !$keyword) return;
+
+    if (isset($_SESSION['user_id'])) {
+        $stmt = $pdo->prepare("INSERT INTO search_history (user_id, cat_id, keyword) VALUES (?, ?, ?)");
+        $stmt->execute([$_SESSION['user_id'], $cat_id, $keyword]);
+    } else {
+        // Guest user - record in session
+        if (!isset($_SESSION['search_history'])) {
+            $_SESSION['search_history'] = [];
+        }
+        // Limit session history to last 5 entries
+        array_unshift($_SESSION['search_history'], [
+            'cat_id' => $cat_id,
+            'keyword' => $keyword,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+        $_SESSION['search_history'] = array_slice($_SESSION['search_history'], 0, 5);
+    }
+}
+
+/**
  * Image Upload & Processing (GD Library) - Enhanced with pHash & Watermark
  */
 function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id = 0, $ad_id = 0, $watermark = true) {
