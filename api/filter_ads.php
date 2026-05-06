@@ -59,15 +59,48 @@ if ($type === 'sale') {
 }
 
 if ($extra) {
+    require_once __DIR__ . '/../inc/filters_config.php';
+    $cat_name = "";
+    if ($cat_id) {
+        $stmt_cat = $pdo->prepare("SELECT name FROM categories WHERE id = ?");
+        $stmt_cat->execute([$cat_id]);
+        $cat_name = $stmt_cat->fetchColumn() ?: "";
+    }
+    $valid_filters = get_category_filters($cat_name);
+
     foreach ($extra as $key => $value) {
         if (empty($value)) continue;
-        // Basic filtering for extra data
-        if ($key === 'verified_seller' && $value === 'Verified sellers only') {
-            $query .= " AND (u.is_verified = 1 OR u.verification_tier IN ('nin_verified', 'business_verified'))";
-        } else {
-            // Note: In a production environment, we should check if $key is a valid filter for the category
-            $query .= " AND JSON_UNQUOTE(JSON_EXTRACT(a.ad_data, '$.\"$key\"')) = ?";
-            $params[] = $value;
+
+        if (isset($valid_filters[$key]) || $key === 'verified_seller' || $key === 'trusted_agent' || $key === 'discount') {
+            if ($key === 'verified_seller' && $value === 'Verified sellers only') {
+                $query .= " AND (u.is_verified = 1 OR u.verification_tier IN ('nin_verified', 'business_verified'))";
+            } elseif ($key === 'trusted_agent' && $value === 'Yes') {
+                $query .= " AND (u.is_verified = 1 OR u.verification_tier IN ('nin_verified', 'business_verified'))";
+            } elseif ($key === 'discount' && $value === 'With discount') {
+                $query .= " AND JSON_UNQUOTE(JSON_EXTRACT(a.ad_data, '$.\"discount\"')) = '1'";
+            } else {
+                if (is_array($value)) {
+                    $json_placeholders = implode(',', array_fill(0, count($value), '?'));
+                    $query .= " AND JSON_UNQUOTE(JSON_EXTRACT(a.ad_data, '$.\"$key\"')) IN ($json_placeholders)";
+                    foreach ($value as $v) {
+                        $params[] = $v;
+                    }
+                } else {
+                    $query .= " AND JSON_UNQUOTE(JSON_EXTRACT(a.ad_data, '$.\"$key\"')) = ?";
+                    $params[] = $value;
+                }
+            }
+        } elseif (strpos($key, 'min_') === 0 || strpos($key, 'max_') === 0) {
+            $base_key = substr($key, 4);
+            if (isset($valid_filters[$base_key]) || $base_key === 'price') {
+                $op = (strpos($key, 'min_') === 0) ? '>=' : '<=';
+                if ($base_key === 'price') {
+                    $query .= " AND a.price $op ?";
+                } else {
+                    $query .= " AND CAST(JSON_UNQUOTE(JSON_EXTRACT(a.ad_data, '$.\"$base_key\"')) AS DECIMAL(15,2)) $op ?";
+                }
+                $params[] = (float)$value;
+            }
         }
     }
 }
