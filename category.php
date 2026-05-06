@@ -209,7 +209,10 @@ include __DIR__ . '/templates/header.php';
 
             <!-- Filters -->
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-24">
-                <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest mb-6 pb-2 border-b">Refine Results</h3>
+                <div class="flex items-center justify-between mb-6 pb-2 border-b">
+                    <h3 class="text-xs font-black text-gray-800 uppercase tracking-widest">Refine Results</h3>
+                    <span id="resultsCount" class="bg-primary-50 text-primary-600 text-[10px] font-black px-2 py-1 rounded-full"><?php echo count($ads); ?></span>
+                </div>
                 <form action="" method="GET" class="space-y-6">
                     <div class="mb-6">
                         <label class="flex items-center gap-3 cursor-pointer group">
@@ -293,7 +296,7 @@ include __DIR__ . '/templates/header.php';
                 </button>
             </div>
 
-            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+            <div id="adsGrid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
                 <?php foreach ($ads as $ad):
                     $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
                 ?>
@@ -362,9 +365,13 @@ function loadFilters(catId) {
         .then(filters => {
             let html = '';
             let hasQuickFilters = false;
-            const currentExtra = <?php echo json_encode($extra); ?>;
-            const currentMinPrice = '<?php echo $min_price ?: ''; ?>';
-            const currentMaxPrice = '<?php echo $max_price ?: ''; ?>';
+
+            const form = document.querySelector('form');
+            const formData = form ? new FormData(form) : new FormData();
+
+            const currentMinPrice = formData.get('min_price') || '<?php echo $min_price ?: ""; ?>';
+            const currentMaxPrice = formData.get('max_price') || '<?php echo $max_price ?: ""; ?>';
+            const currentExtraMake = formData.get('extra[make]') || '<?php echo $extra['make'] ?? ""; ?>';
 
             priceQuick.innerHTML = '';
             brandQuick.innerHTML = '';
@@ -380,7 +387,9 @@ function loadFilters(catId) {
                         const btn = document.createElement('button');
                         btn.type = 'button';
                         btn.onclick = () => setQuickRange('price', range.min, range.max);
-                        btn.className = `px-6 py-3 rounded-xl text-xs font-black transition-all border ${active ? 'bg-primary-600 text-white border-primary-600 shadow-lg' : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200'}`;
+                        btn.dataset.min = range.min;
+                        btn.dataset.max = range.max;
+                        btn.className = `price-quick-chip px-6 py-3 rounded-xl text-xs font-black transition-all border ${active ? 'bg-primary-600 text-white border-primary-600 shadow-lg' : 'bg-white text-gray-600 border-gray-100 hover:border-primary-200'}`;
                         btn.textContent = range.label;
                         priceQuick.appendChild(btn);
                     });
@@ -390,11 +399,12 @@ function loadFilters(catId) {
                 if (key === 'make' && f.quick_brands) {
                     hasQuickFilters = true;
                     f.quick_brands.forEach(brand => {
-                        const active = (currentExtra['make'] == brand.name);
+                        const active = (currentExtraMake == brand.name);
                         const card = document.createElement('button');
                         card.type = 'button';
                         card.onclick = () => setQuickBrand(brand.name);
-                        card.className = `flex flex-col items-center justify-center p-4 bg-white rounded-2xl border transition-all hover:shadow-md ${active ? 'border-primary-600 ring-2 ring-primary-50' : 'border-gray-100'}`;
+                        card.dataset.brand = brand.name;
+                        card.className = `brand-quick-card flex flex-col items-center justify-center p-4 bg-white rounded-2xl border transition-all hover:shadow-md ${active ? 'border-primary-600 ring-2 ring-primary-50' : 'border-gray-100'}`;
                         card.innerHTML = `
                             <div class="w-12 h-12 mb-3 flex items-center justify-center">
                                 <img src="${brand.logo}" alt="${brand.name}" class="max-w-full max-h-full object-contain ${active ? '' : 'grayscale opacity-70'}">
@@ -514,6 +524,19 @@ function setQuickRange(key, min, max) {
     if (minInput && maxInput) {
         minInput.value = min;
         maxInput.value = max;
+
+        // Update UI state of chips
+        document.querySelectorAll('.price-quick-chip').forEach(btn => {
+            const active = (btn.dataset.min == min && btn.dataset.max == max);
+            if (active) {
+                btn.classList.add('bg-primary-600', 'text-white', 'border-primary-600', 'shadow-lg');
+                btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-100');
+            } else {
+                btn.classList.remove('bg-primary-600', 'text-white', 'border-primary-600', 'shadow-lg');
+                btn.classList.add('bg-white', 'text-gray-600', 'border-gray-100');
+            }
+        });
+
         updateAds();
     }
 }
@@ -527,6 +550,22 @@ function setQuickBrand(brandName) {
         } else {
             makeSelect.value = brandName;
         }
+
+        // Update UI state of cards
+        document.querySelectorAll('.brand-quick-card').forEach(card => {
+            const active = (card.dataset.brand == makeSelect.value);
+            const img = card.querySelector('img');
+            if (active) {
+                card.classList.add('border-primary-600', 'ring-2', 'ring-primary-50');
+                card.classList.remove('border-gray-100');
+                if (img) { img.classList.remove('grayscale', 'opacity-70'); }
+            } else {
+                card.classList.remove('border-primary-600', 'ring-2', 'ring-primary-50');
+                card.classList.add('border-gray-100');
+                if (img) { img.classList.add('grayscale', 'opacity-70'); }
+            }
+        });
+
         updateAds();
     }
 }
@@ -614,6 +653,7 @@ document.addEventListener('DOMContentLoaded', () => loadFilters(currentCategoryI
 
 function updateAds() {
     const grid = document.getElementById('adsGrid');
+    if (!grid) return;
     grid.style.opacity = '0.5';
 
     const form = document.querySelector('form');
@@ -631,9 +671,13 @@ function updateAds() {
         .then(data => {
             if (data.success) {
                 renderAds(data.ads);
-                if (document.getElementById('resultsCount')) document.getElementById('resultsCount').innerText = data.ads.length;
+                const countEl = document.getElementById('resultsCount');
+                if (countEl) countEl.innerText = data.ads.length;
                 window.history.pushState({}, '', `/category/${currentSlug}?${params.toString()}`);
             }
+        })
+        .catch(err => console.error('Filter error:', err))
+        .finally(() => {
             grid.style.opacity = '1';
         });
 }
