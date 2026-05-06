@@ -26,13 +26,13 @@ function get_category_filters($cat_name) {
                 'type' => 'select',
                 'searchable' => true,
                 'quick_brands' => [
-                    ['name' => 'Toyota', 'logo' => 'https://www.carlogos.org/car-logos/toyota-logo-2020-500x281.png'],
-                    ['name' => 'Mercedes-Benz', 'logo' => 'https://www.carlogos.org/car-logos/mercedes-benz-logo-2011-640x510.png'],
-                    ['name' => 'Lexus', 'logo' => 'https://www.carlogos.org/car-logos/lexus-logo-2022-640x336.png'],
-                    ['name' => 'Honda', 'logo' => 'https://www.carlogos.org/car-logos/honda-logo-2000-640x535.png'],
-                    ['name' => 'Hyundai', 'logo' => 'https://www.carlogos.org/car-logos/hyundai-logo-2011-640x323.png'],
-                    ['name' => 'Acura', 'logo' => 'https://www.carlogos.org/car-logos/acura-logo-2002-640x546.png'],
-                    ['name' => 'Ford', 'logo' => 'https://www.carlogos.org/car-logos/ford-logo-2017-640x264.png']
+                    ['name' => 'Toyota', 'logo' => '/assets/img/car-logos/toyota.png'],
+                    ['name' => 'Mercedes-Benz', 'logo' => '/assets/img/car-logos/mercedes-benz.png'],
+                    ['name' => 'Lexus', 'logo' => '/assets/img/car-logos/lexus.png'],
+                    ['name' => 'Honda', 'logo' => '/assets/img/car-logos/honda.png'],
+                    ['name' => 'Hyundai', 'logo' => '/assets/img/car-logos/Hyundai.png'],
+                    ['name' => 'Acura', 'logo' => '/assets/img/car-logos/acura.png'],
+                    ['name' => 'Ford', 'logo' => '/assets/img/car-logos/ford.png']
                 ],
                 'options' => [
                     'Toyota', 'Mercedes-Benz', 'Lexus', 'Honda', 'Hyundai', 'Acura', 'Audi', 'BMW', 'BYD', 'Bentley',
