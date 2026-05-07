@@ -12,26 +12,30 @@ if (isset($_SESSION['user_id'])) {
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $password = $_POST['password'];
-
-    $brute = check_brute_force($email, 0);
-    if ($brute['blocked']) {
-        $error = "Too many failed attempts. Account suspended or IP blocked.";
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        $error = "CSRF token validation failed. Please try again.";
     } else {
-        $stmt = $pdo->prepare("SELECT id, full_name, password, is_suspended FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
+        $email = $_POST['email'];
+        $password = $_POST['password'];
 
-        if ($user && !$user['is_suspended'] && password_verify($password, $user['password'])) {
-            log_login_attempt($email, 0, 1);
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['full_name'];
-            header('Location: index.php');
-            exit;
+        $brute = check_brute_force($email, 0);
+        if ($brute['blocked']) {
+            $error = "Too many failed attempts. Account suspended or IP blocked.";
         } else {
-            log_login_attempt($email, 0, 0);
-            $error = $user && $user['is_suspended'] ? "Account suspended." : "Invalid email or password.";
+            $stmt = $pdo->prepare("SELECT id, full_name, password, is_suspended FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
+
+            if ($user && !$user['is_suspended'] && password_verify($password, $user['password'])) {
+                log_login_attempt($email, 0, 1);
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['user_name'] = $user['full_name'];
+                header('Location: index.php');
+                exit;
+            } else {
+                log_login_attempt($email, 0, 0);
+                $error = $user && $user['is_suspended'] ? "Account suspended." : "Invalid email or password.";
+            }
         }
     }
 }
@@ -48,6 +52,7 @@ include __DIR__ . '/templates/header.php';
         <?php endif; ?>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <div class="mb-4">
                 <label class="block text-gray-700 font-bold mb-2">Email Address</label>
                 <input type="email" name="email" class="w-full p-3 border-2 border-gray-100 rounded-lg focus:border-primary-500 outline-none transition" placeholder="example@mail.com" required autofocus>

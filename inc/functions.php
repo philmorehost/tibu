@@ -33,6 +33,28 @@ function h($string) {
 }
 
 /**
+ * Generate and store CSRF token in session
+ */
+function generate_csrf_token() {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Verify CSRF token from request against session
+ */
+function verify_csrf_token($token) {
+    if (session_status() === PHP_SESSION_NONE) session_start();
+    if (!isset($_SESSION['csrf_token']) || empty($token)) {
+        return false;
+    }
+    return hash_equals($_SESSION['csrf_token'], $token);
+}
+
+/**
  * Redirect with a message
  */
 function redirect($url, $message = null, $type = 'info') {
