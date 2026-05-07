@@ -89,6 +89,13 @@ try {
     $pdo->exec("ALTER TABLE ads MODIFY COLUMN status ENUM('pending', 'active', 'declined', 'sold', 'swapped', 'expired', 'moderation') DEFAULT 'pending'");
 } catch (Exception $e) {}
 
+// Robust UTF8MB4 Support for Multi-currency and Special Characters
+try {
+    $pdo->exec("ALTER TABLE pages CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("ALTER TABLE blog_posts CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("ALTER TABLE ads CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+} catch (Exception $e) {}
+
 // Missing Tables
 $missing_tables = [
     "CREATE TABLE IF NOT EXISTS states (
