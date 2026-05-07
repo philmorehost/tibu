@@ -65,6 +65,10 @@ $tables = [
         'meta_title' => "VARCHAR(255) DEFAULT NULL AFTER image",
         'summary' => "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
         'content' => "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    ],
+    'pages' => [
+        'title' => "VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL",
+        'content' => "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
     ]
 ];
 
@@ -262,9 +266,9 @@ $missing_tables = [
     )",
     "CREATE TABLE IF NOT EXISTS pages (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        title VARCHAR(150) NOT NULL,
+        title VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
-        content LONGTEXT,
+        content LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
         meta_desc TEXT,
         meta_keys TEXT,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -405,38 +409,48 @@ try {
     }
 } catch (Exception $e) {}
 
-// Seed Default Pages
+// Seed Default Pages with Professional Content
 $pages = [
     [
-        'title' => 'Terms & Conditions',
-        'slug' => 'terms',
-        'content' => "Welcome to Tibung. By using our platform, you agree to comply with the following terms... [Detailed terms here]"
-    ],
-    [
-        'title' => 'Privacy Policy',
-        'slug' => 'privacy',
-        'content' => "Your privacy is important to us. This policy explains how we collect and use your data... [Detailed policy here]"
-    ],
-    [
-        'title' => 'Billing Policy',
         'slug' => 'billing',
-        'content' => "All payments on Tibung are processed securely. This policy outlines our refund and billing procedures... [Detailed policy here]"
+        'title' => 'Billing Policy',
+        'content' => "# Billing Policy\n\n**Last updated: April 2026**\n**Effective date: April 2026**\n\nThis Billing Policy explains all paid features on Tibu.ng, how charges work, and your rights regarding refunds and cancellations.\n\n---\n\n## 1. Free Features — What Is Always Free\n\nThe following features on Tibu.ng are permanently free and will never be charged for:\n\n- Account registration\n- Up to 20 listings for phone + email verified accounts\n- Unlimited listings for NIN Verified accounts\n- Browsing and searching all listings\n- Contacting sellers via in-app messaging\n- Seller analytics dashboard (views, enquiry rates, listing health)\n- Receiving and displaying reviews\n- Swap & Exchange marketplace access\n- Basic seller profile page\n\n**Free listings are never suppressed.** Free listings rank based on recency, listing quality, and Deal Safety Score — never on payment status.\n\n---\n\n## 2. Promoted Listing Tiers\n\n### Tibu Boost — ₦1,500 for 7 days\n- 3× more impressions in your category and city feed\n- \"Sponsored\" badge\n\n### Tibu Top — ₦3,500 for 7 days\n- Top 3 placement in category search results\n\n### Tibu Pro — ₦12,000 per month\n- Unlimited listings, Full analytics, Priority support\n\n### Tibu Business — ₦35,000 per month\n- Everything in Tibu Pro + Dedicated business profile and account manager\n\n---\n\n## 3. Payment Methods\n\nAll payments are processed securely through **Paystack** or **Flutterwave**. We do not store card details.\n\n---\n\n## 8. Refund Policy\n\nFull refunds are issued for technical errors or double-charges. Email billing@tibu.ng for assistance."
     ],
     [
-        'title' => 'Safety Tips',
-        'slug' => 'safety-tips',
-        'content' => "Safety is our priority. Follow these tips to ensure a safe trading experience... [Detailed tips here]"
+        'slug' => 'about-us',
+        'title' => 'About Tibu.ng',
+        'content' => "# About Tibu.ng\n\n## Who We Are\nTibu.ng is Nigeria's safest buy, sell and swap marketplace. We built Tibu because buying and selling online in Nigeria had a trust problem.\n\n## What Makes Tibu Different\nEvery seller on Tibu.ng must verify their identity. Phone and email sign-up gives you 20 free listings. NIN verification unlocks unlimited listings and the Tibu Verified Badge.\n\nWe are the only Nigerian marketplace with a dedicated, verified Swap & Exchange marketplace and a Deal Safety Score on every listing.\n\n## Our Mission\nTo make buying and selling in Nigeria as safe, transparent, and straightforward as it should always have been."
     ],
     [
-        'title' => 'Frequently Asked Questions',
+        'slug' => 'contact',
+        'title' => 'Contact Us',
+        'content' => "# Contact Us — Tibu.ng\n\n## Support Channels\n\n### General Support\n**Email:** support@tibu.ng\n**Response time:** Within 24 hours on business days\n\n### Billing & Promotions\n**Email:** billing@tibu.ng\n\n### Safety Reports\n**Email:** safety@tibu.ng\n**Response time:** Within 24 hours; urgent cases reviewed same day\n\n---\n\n## Report a Listing or User\nIf you encounter a suspicious listing or user, tap the flag icon (⚑) on the listing page or seller profile."
+    ],
+    [
         'slug' => 'faq',
-        'content' => "JSON: [{\"q\": \"How to post an ad?\", \"a\": \"Click on the Sell button and fill the form.\"}, {\"q\": \"Is it free?\", \"a\": \"Yes, we have free and premium packages.\"}]"
+        'title' => 'Frequently Asked Questions',
+        'content' => "JSON: [{\"q\": \"What is Tibu.ng?\", \"a\": \"Tibu.ng is Nigeria's safest buy, sell and swap marketplace with NIN-verified sellers.\"}, {\"q\": \"Is Tibu.ng free?\", \"a\": \"Yes. Browsing, searching, and standard listings are free.\"}, {\"q\": \"What is the Verified Badge?\", \"a\": \"It means a seller has completed NIN verification matched with a live selfie.\"}, {\"q\": \"How to post an ad?\", \"a\": \"Click 'Post Ad' on the homepage and follow the steps.\"}, {\"q\": \"Is it safe to pay a seller directly?\", \"a\": \"Always inspect items in person before payment. Use Tibu's in-app messaging for records.\"}]"
+    ],
+    [
+        'slug' => 'privacy',
+        'title' => 'Privacy Policy',
+        'content' => "# Privacy Policy\n\nTibu.ng is committed to protecting your personal information. We collect registration data, identity verification data (NIN), and usage data to provide a safe marketplace experience. We do not store raw ID documents or selfie images after verification."
+    ],
+    [
+        'slug' => 'safety-tips',
+        'title' => 'Safety Tips',
+        'content' => "# Safety Tips — Tibu.ng\n\n- **Check verification badges.** Prefer NIN-verified sellers.\n- **Read reviews.** Look for detailed experiences.\n- **Keep conversations on Tibu.** Avoid moving to WhatsApp too early.\n- **Never pay before seeing the item.** This is the most common scam pattern.\n- **Meet in public.** Banks, malls, or busy markets are ideal."
+    ],
+    [
+        'slug' => 'terms',
+        'title' => 'Terms & Conditions',
+        'content' => "# Terms & Conditions\n\nBy using Tibu.ng, you agree to comply with our rules. Users must be 18+, provide truthful info, and follow listing requirements. Prohibited items include illegal drugs, firearms, and adult content."
     ]
 ];
 
 foreach ($pages as $p) {
     try {
-        $stmt = $pdo->prepare("INSERT IGNORE INTO pages (title, slug, content) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO pages (title, slug, content) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE title = IF(content LIKE '%[Detailed%' OR content = '', VALUES(title), title), content = IF(content LIKE '%[Detailed%' OR content = '', VALUES(content), content)");
         $stmt->execute([$p['title'], $p['slug'], $p['content']]);
     } catch (Exception $e) {}
 }
