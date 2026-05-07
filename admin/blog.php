@@ -7,8 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
     $title = $_POST['title'];
     $slug = $_POST['slug'] ?: strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
-    $summary = $_POST['summary'];
     $content = $_POST['content'];
+    $summary = !empty($_POST['summary']) ? $_POST['summary'] : truncate_words($content, 70);
     $m_title = $_POST['meta_title'];
     $m_desc = $_POST['meta_desc'];
     $m_keys = $_POST['meta_keys'];
@@ -69,8 +69,8 @@ include __DIR__ . '/../templates/admin_header.php';
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Summary (Brief intro)</label>
-                    <textarea name="summary" rows="3" class="w-full p-3 border rounded-xl text-sm"><?php echo h($edit_post['summary'] ?? ''); ?></textarea>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Summary (Leave empty to auto-generate first 70 words)</label>
+                    <textarea name="summary" rows="3" class="w-full p-3 border rounded-xl text-sm" placeholder="Optional: brief introduction..."><?php echo h($edit_post['summary'] ?? ''); ?></textarea>
                 </div>
 
                 <div>

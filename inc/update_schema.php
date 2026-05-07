@@ -62,7 +62,9 @@ $tables = [
         'replied_at' => "DATETIME DEFAULT NULL AFTER reply_text"
     ],
     'blog_posts' => [
-        'meta_title' => "VARCHAR(255) DEFAULT NULL AFTER image"
+        'meta_title' => "VARCHAR(255) DEFAULT NULL AFTER image",
+        'summary' => "TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+        'content' => "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
     ]
 ];
 
@@ -271,8 +273,8 @@ $missing_tables = [
         id INT AUTO_INCREMENT PRIMARY KEY,
         title VARCHAR(200) NOT NULL,
         slug VARCHAR(255) UNIQUE NOT NULL,
-        summary TEXT,
-        content LONGTEXT,
+        summary TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+        content LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
         image VARCHAR(255) DEFAULT NULL,
         meta_title VARCHAR(255) DEFAULT NULL,
         meta_desc TEXT,

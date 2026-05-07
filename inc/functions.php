@@ -59,6 +59,19 @@ function get_client_ip() {
 /**
  * Record Search History for Personalized Recommendations
  */
+/**
+ * Truncate string by words
+ */
+function truncate_words($text, $limit = 70) {
+    $text = strip_tags($text);
+    $words = preg_split("/[\s]+/", $text, $limit + 1);
+    if (count($words) > $limit) {
+        array_pop($words);
+        return implode(' ', $words) . "...";
+    }
+    return implode(' ', $words);
+}
+
 function record_search_history($cat_id = null, $keyword = null) {
     global $pdo;
     if (!$cat_id && !$keyword) return;
