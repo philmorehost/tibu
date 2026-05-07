@@ -99,7 +99,7 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
     // Apply Watermark
     apply_site_watermark($src, $seller_info);
 
-    $filename = md5(uniqid(rand(), true)) . ".jpg";
+    $filename = bin2hex(random_bytes(16)) . ".jpg";
     $target_file = $target_dir . "/" . $filename;
 
     $new_width = min($width, $max_width);
