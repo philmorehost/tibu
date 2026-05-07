@@ -135,8 +135,16 @@ if (isset($pdo)) {
     <!-- Open Graph / WhatsApp Integration (Feature 10) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?php echo (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] === "on" ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
-    <meta property="og:title" content="<?php echo h($page_title ?? ($settings["site_name"] ?? "Classifieds")); ?>">
-    <meta property="og:description" content="<?php echo h($page_desc ?? ($settings["meta_description"] ?? "")); ?>">
+    <?php
+    $og_title = $page_title ?? ($settings["site_name"] ?? "Classifieds");
+    $og_desc = $page_desc ?? ($settings["meta_description"] ?? "");
+    if (basename($_SERVER['PHP_SELF']) == 'index.php') {
+        $og_title = "Tibu.ng — Nigeria's Safest Buy, Sell & Swap Marketplace";
+        $og_desc = "NIN-verified sellers. Zero fake listings. Browse cars, phones, property & more across all 36 states. Nigeria's only verified swap marketplace.";
+    }
+    ?>
+    <meta property="og:title" content="<?php echo h($og_title); ?>">
+    <meta property="og:description" content="<?php echo h($og_desc); ?>">
     <meta property="og:image" content="<?php echo isset($ad["image"]) ? "/uploads/ads/".$ad["image"] : "/assets/img/og-image.png"; ?>">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>

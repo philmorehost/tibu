@@ -60,6 +60,9 @@ $tables = [
     'reviews' => [
         'reply_text' => "TEXT DEFAULT NULL AFTER body",
         'replied_at' => "DATETIME DEFAULT NULL AFTER reply_text"
+    ],
+    'blog_posts' => [
+        'meta_title' => "VARCHAR(255) DEFAULT NULL AFTER image"
     ]
 ];
 
@@ -271,6 +274,7 @@ $missing_tables = [
         summary TEXT,
         content LONGTEXT,
         image VARCHAR(255) DEFAULT NULL,
+        meta_title VARCHAR(255) DEFAULT NULL,
         meta_desc TEXT,
         meta_keywords TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

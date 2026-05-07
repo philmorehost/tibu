@@ -4,6 +4,10 @@ RewriteEngine On
 # SEO Category Permalink: /category/slug
 RewriteRule ^category/([^/]+)/?$ category.php?slug=$1 [L,QSA]
 
+# Comparison and Trust Permalinks
+RewriteRule ^vs/jiji/?$ vs_jiji.php [L,QSA]
+RewriteRule ^trust/?$ trust.php [L,QSA]
+
 # CMS Page Permalink: /p/slug
 RewriteRule ^p/([^/]+)/?$ page.php?slug=$1 [L,QSA]
 

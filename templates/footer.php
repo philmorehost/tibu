@@ -9,6 +9,8 @@
             <ul class="space-y-2 text-sm text-gray-400">
                 <li><a href="/blog" class="hover:text-white transition">Marketplace Blog</a></li>
                 <li><a href="/packages.php" class="hover:text-white transition">Pricing Plans</a></li>
+                <li><a href="/vs/jiji" class="hover:text-white transition">Tibu vs Jiji</a></li>
+                <li><a href="/trust" class="hover:text-white transition">Trust & Safety</a></li>
             </ul>
         </div>
         <div>

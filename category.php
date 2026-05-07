@@ -51,6 +51,34 @@ $page_title = $meta['title'] . " - " . ($settings['site_name'] ?? 'Classifieds')
 $page_desc = $meta['description'];
 $page_keywords = $meta['keywords'];
 
+// Category SEO Overrides
+$cat_seo_name = strtoupper($category['name']);
+if ($cat_seo_name === 'VEHICLES') {
+    $page_title = "Verified Cars & Vehicles for Sale in Nigeria | Tibu.ng";
+    $page_desc = "Browse verified cars, trucks and motorcycles for sale across Nigeria. All sellers NIN-verified on Tibu.ng — Nigeria's safest vehicle marketplace. New listings daily.";
+    $page_keywords = "cars for sale Nigeria, buy used car Lagos, verified cars Nigeria, used cars Abuja, trucks for sale Nigeria, buy car Nigeria, motorcycles Nigeria, cheap cars Lagos, NIN-verified sellers";
+} elseif ($cat_seo_name === 'PROPERTY (REAL ESTATE)') {
+    $page_title = "Verified Property for Rent & Sale in Nigeria — No Fake Agents | Tibu.ng";
+    $page_desc = "Find verified rental and sale property across Nigeria. Tibu requires every listing to declare Owner or Agent — with separate verification for each. No ghost listings.";
+    $page_keywords = "houses for rent Lagos, property for sale Nigeria, apartments Lagos, rent house Abuja, verified property Nigeria, real estate Nigeria, land for sale Lagos, houses Abuja, NIN-verified sellers";
+} elseif ($cat_seo_name === 'PHONES & TABLETS') {
+    $page_title = "Buy Verified Used Phones & Tablets in Nigeria | Tibu.ng";
+    $page_desc = "Shop verified used phones and tablets across Nigeria. Identity-checked sellers, real photos, Deal Safety Score on every listing. Compare prices in Lagos, Abuja & more.";
+    $page_keywords = "buy used phones Nigeria, sell phone Lagos, iphone for sale Nigeria, Samsung Nigeria, used phones Abuja, cheap phones Lagos, buy phone online Nigeria, tablets Nigeria, NIN-verified sellers";
+} elseif ($cat_seo_name === 'ELECTRONICS') {
+    $page_title = "Buy & Sell Verified Electronics in Nigeria | Tibu.ng";
+    $page_desc = "Browse verified laptops, TVs, cameras and electronics for sale across Nigeria. All Tibu sellers are identity-verified — buy with confidence. New listings added daily.";
+    $page_keywords = "buy electronics Nigeria, sell laptop Nigeria, used laptops Lagos, TV for sale Nigeria, buy laptop Abuja, electronics marketplace Nigeria, cheap electronics Lagos, NIN-verified sellers";
+} elseif ($cat_seo_name === 'FASHION & ACCESSORIES') {
+    $page_title = "Buy & Sell Fashion, Clothing & Accessories in Nigeria | Tibu.ng";
+    $page_desc = "Shop verified fashion, clothing, shoes and accessories from sellers across Nigeria. Verified sellers only on Tibu.ng — browse Lagos, Abuja, Port Harcourt & all 36 states.";
+    $page_keywords = "fashion Nigeria, buy clothes Lagos, sell clothes Nigeria, shoes for sale Nigeria, bags Nigeria, men clothing Lagos, women fashion Nigeria, accessories Nigeria, NIN-verified sellers";
+} elseif ($cat_seo_name === 'JOBS & EMPLOYMENT') {
+    $page_title = "Job Vacancies & Employment Opportunities in Nigeria | Tibu.ng";
+    $page_desc = "Find verified job listings and opportunities across Nigeria. Post your CV or hire verified candidates on Tibu.ng — Nigeria's trusted marketplace for jobs.";
+    $page_keywords = "jobs in Nigeria, job vacancies Lagos, employment Nigeria, jobs Abuja, hire staff Nigeria, post CV Nigeria, job listings Nigeria, work in Lagos, NIN-verified sellers";
+}
+
 // Get ads in this category
 $query = "SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id = a.id AND is_main = 1 LIMIT 1) as image, s.name as state_name, c.name as cat_name
          FROM ads a

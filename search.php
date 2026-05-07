@@ -104,6 +104,13 @@ $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $ads = $stmt->fetchAll();
 
+// SEO Meta Data Overrides for Swap Page
+if ($type === 'swap') {
+    $page_title = "Swap & Exchange Marketplace Nigeria — Trade Phones, Electronics & More | Tibu.ng";
+    $page_desc = "Nigeria's only verified swap marketplace. List what you own, say what you want — Tibu matches you with swap partners nearby. Trade phones, electronics & more. No cash needed.";
+    $page_keywords = "swap phone Nigeria, exchange electronics Nigeria, trade phone Lagos, swap marketplace Nigeria, exchange goods Nigeria, phone swap Lagos, trade in phone Nigeria, swap electronics Abuja, NIN-verified sellers";
+}
+
 include __DIR__ . '/templates/header.php';
 ?>
 

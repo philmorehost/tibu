@@ -59,6 +59,11 @@ $stmt = $pdo->query("SELECT a.*, (SELECT image_path FROM ad_images WHERE ad_id =
                                 ELSE 4 END ASC, a.bumped_at DESC LIMIT 20");
 $recent_ads = $stmt->fetchAll();
 
+// SEO Meta Data
+$page_title = "Tibu.ng — Buy, Sell & Swap with Verified Sellers in Nigeria";
+$page_desc = "Buy and sell safely on Tibu.ng — NIN-verified sellers, zero fake listings. Cars, phones, property & more across all 36 states. Nigeria's only verified swap marketplace.";
+$page_keywords = "buy sell Nigeria, classified ads Nigeria, online marketplace Nigeria, NIN-verified sellers, safe marketplace Nigeria, swap phone Nigeria, buy used car Lagos, sell online Nigeria, houses for rent Lagos, Tibu";
+
 include __DIR__ . '/templates/header.php';
 ?>
 
