@@ -18,6 +18,28 @@ if (isset($_SESSION["schema_verified"])) {
     }
 }
 
+// Robust UTF8MB4 Support for Multi-currency and Special Characters (Must run even if schema_verified is set for column updates)
+try {
+    $pdo->exec("SET NAMES utf8mb4");
+    $db_name = DB_NAME;
+    $pdo->exec("ALTER DATABASE `$db_name` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+    $tables_to_fix = ['pages', 'blog_posts', 'ads', 'messages', 'reviews'];
+    foreach ($tables_to_fix as $t) {
+        $pdo->exec("ALTER TABLE `$t` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        $pdo->exec("ALTER TABLE `$t` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    }
+
+    // Explicit column fix to prevent SQLSTATE[22007] (Naira Symbol / Emojis)
+    $pdo->exec("ALTER TABLE pages MODIFY COLUMN content LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("ALTER TABLE pages MODIFY COLUMN title VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("ALTER TABLE blog_posts MODIFY COLUMN content LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("ALTER TABLE blog_posts MODIFY COLUMN summary TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+    $pdo->exec("ALTER TABLE ads MODIFY COLUMN description TEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+} catch (Exception $e) {
+    error_log("UTF8MB4 Migration Error: " . $e->getMessage());
+}
+
 if (isset($_SESSION["schema_verified"])) return;
 
 $tables = [
@@ -89,12 +111,6 @@ try {
     $pdo->exec("ALTER TABLE ads MODIFY COLUMN status ENUM('pending', 'active', 'declined', 'sold', 'swapped', 'expired', 'moderation') DEFAULT 'pending'");
 } catch (Exception $e) {}
 
-// Robust UTF8MB4 Support for Multi-currency and Special Characters
-try {
-    $pdo->exec("ALTER TABLE pages CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $pdo->exec("ALTER TABLE blog_posts CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-    $pdo->exec("ALTER TABLE ads CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-} catch (Exception $e) {}
 
 // Missing Tables
 $missing_tables = [
