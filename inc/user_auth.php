@@ -3,7 +3,12 @@
  * Jiji-Inspired-1.0 User Authentication Logic
  */
 
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    // Implement persistent sessions: set lifetime to 30 days
+    ini_set('session.gc_maxlifetime', 2592000);
+    session_set_cookie_params(2592000);
+    session_start();
+}
 
 function is_user_logged_in() {
     return isset($_SESSION['user_id']);
@@ -11,6 +16,7 @@ function is_user_logged_in() {
 
 function require_user() {
     if (!is_user_logged_in()) {
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
         header('Location: /login.php');
         exit;
     }

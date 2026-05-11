@@ -14,7 +14,7 @@ $stmt->execute([$ad_id]);
 $ad = $stmt->fetch();
 
 if (!$ad || $ad['user_id'] == $user_id) {
-    redirect('index.php', 'Invalid ad selection.');
+    redirect('/index.php', 'Invalid ad selection.');
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("INSERT INTO swap_proposals (ad_id, offered_ad_id, sender_id, receiver_id, cash_topup, message) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$ad_id, $offered_ad_id, $user_id, $ad['user_id'], $cash_topup, $message]);
 
-        redirect('my_swaps.php', 'Swap proposal sent successfully!');
+        redirect('/my_swaps.php', 'Swap proposal sent successfully!');
     } else {
         $error = "Please select one of your active ads to offer.";
     }

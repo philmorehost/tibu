@@ -4,21 +4,24 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../inc/functions.php';
 require_once __DIR__ . '/../inc/user_auth.php';
 
-// Fetch global settings for site name, etc.
-if (isset($pdo)) {
-    $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
-    $settings = [];
-    while ($row = $stmt->fetch()) {
-        $settings[$row['setting_key']] = $row['setting_value'];
-    }
-}
-
 // Global IP Blacklist/Country Check
 if (isset($pdo)) {
-    require_once __DIR__ . '/../inc/security.php';
-
-    // Run migrations to ensure schema is up to date
+    // Run migrations to ensure schema is up to date BEFORE anything else
     require_once __DIR__ . '/../inc/update_schema.php';
+    require_once __DIR__ . '/../inc/security.php';
+}
+
+// Fetch global settings for site name, etc.
+if (isset($pdo)) {
+    try {
+        $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
+        $settings = [];
+        while ($row = $stmt->fetch()) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+    } catch (Exception $e) {
+        $settings = [];
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -104,14 +107,46 @@ if (isset($pdo)) {
             opacity: 0.3;
             z-index: 1;
         }
+
+        /* Ad Tiers Styling */
+        .tier-premium-border { border: 2px solid #0966ce; }
+        .tier-vip-border { border: 2px solid #facc15; }
+        .tier-diamond-border { border: 2px solid #9333ea; }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .shimmer-effect {
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in-up {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
     </style>
 
     <!-- Open Graph / WhatsApp Integration (Feature 10) -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="<?php echo (isset($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] === "on" ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
-    <meta property="og:title" content="<?php echo h($page_title ?? ($settings["site_name"] ?? "Classifieds")); ?>">
-    <meta property="og:description" content="<?php echo h($page_desc ?? ($settings["meta_description"] ?? "")); ?>">
+    <?php
+    $og_title = $page_title ?? ($settings["site_name"] ?? "Classifieds");
+    $og_desc = $page_desc ?? ($settings["meta_description"] ?? "");
+    if (basename($_SERVER['PHP_SELF']) == 'index.php') {
+        $og_title = "Tibu.ng — Nigeria's Safest Buy, Sell & Swap Marketplace";
+        $og_desc = "NIN-verified sellers. Zero fake listings. Browse cars, phones, property & more across all 36 states. Nigeria's only verified swap marketplace.";
+    }
+    ?>
+    <meta property="og:title" content="<?php echo h($og_title); ?>">
+    <meta property="og:description" content="<?php echo h($og_desc); ?>">
     <meta property="og:image" content="<?php echo isset($ad["image"]) ? "/uploads/ads/".$ad["image"] : "/assets/img/og-image.png"; ?>">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
@@ -147,6 +182,10 @@ if (isset($pdo)) {
             </div>
 
             <div class="flex items-center space-x-2 md:space-x-4">
+                <a href="/packages.php" class="text-purple-600 hover:text-purple-700 font-bold flex flex-col items-center">
+                    <i class="fas fa-gem text-xl md:text-base md:mr-1"></i>
+                    <span class="hidden md:inline">Packages</span>
+                </a>
                 <?php if (is_user_logged_in()): ?>
                     <a href="/profile" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
                         <i class="fas fa-user text-xl md:text-base md:mr-1"></i>
@@ -155,6 +194,10 @@ if (isset($pdo)) {
                     <a href="/post-ad" class="bg-yellow-500 text-white p-2 md:px-4 md:py-2 rounded-lg font-bold hover:bg-yellow-600 transition flex items-center justify-center">
                         <i class="fas fa-plus text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">SELL</span>
+                    </a>
+                    <a href="/search.php?type=swap" class="bg-blue-600 text-white p-2 md:px-4 md:py-2 rounded-lg font-bold hover:bg-blue-700 transition flex items-center justify-center">
+                        <i class="fas fa-sync-alt text-xl md:text-base md:mr-1"></i>
+                        <span class="hidden md:inline">SWAP</span>
                     </a>
                 <?php else: ?>
                     <a href="/login" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
@@ -165,9 +208,16 @@ if (isset($pdo)) {
                         <i class="fas fa-user-plus text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">Registration</span>
                     </a>
+                    <a href="/search.php?type=swap" class="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition items-center justify-center">
+                        <i class="fas fa-sync-alt md:mr-1"></i>
+                        <span class="hidden md:inline">SWAP</span>
+                    </a>
                     <!-- New Post AD Icon for Guest Mobile -->
                     <a href="/post-ad" class="md:hidden text-yellow-500 p-2 flex flex-col items-center">
                         <i class="fas fa-plus-circle text-2xl"></i>
+                    </a>
+                    <a href="/search.php?type=swap" class="md:hidden text-blue-600 p-2 flex flex-col items-center">
+                        <i class="fas fa-sync-alt text-2xl"></i>
                     </a>
                 <?php endif; ?>
             </div>
@@ -179,3 +229,15 @@ if (isset($pdo)) {
         <p class="text-[10px] md:text-xs font-black uppercase tracking-[2px]"><?php echo h($settings['site_name'] ?? 'Classifieds'); ?> Verified Sellers have completed NIN + live identity verification. Always look for the <span class="text-yellow-400">Verified Badge</span>.</p>
     </div>
 </div>
+
+<?php if (isset($_SESSION['flash'])): ?>
+<div class="container mx-auto px-4 mt-6">
+    <div class="<?php echo $_SESSION['flash']['type'] === 'error' ? 'bg-red-100 text-red-700 border-red-200' : 'bg-green-100 text-green-700 border-green-200'; ?> p-4 rounded-xl border-2 font-bold text-sm flex items-center justify-between shadow-sm">
+        <div class="flex items-center gap-3">
+            <i class="fas <?php echo $_SESSION['flash']['type'] === 'error' ? 'fa-exclamation-circle' : 'fa-check-circle'; ?>"></i>
+            <?php echo h($_SESSION['flash']['message']); ?>
+        </div>
+        <button onclick="this.parentElement.remove()" class="opacity-50 hover:opacity-100"><i class="fas fa-times"></i></button>
+    </div>
+</div>
+<?php unset($_SESSION['flash']); endif; ?>

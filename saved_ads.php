@@ -36,6 +36,9 @@ include __DIR__ . '/templates/header.php';
                 <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
                 <div class="relative h-48 overflow-hidden fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
                     <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
+                    <?php if ($ad['listing_type'] !== 'for_sale'): ?>
+                        <div class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                    <?php endif; ?>
                     <div class="absolute bottom-4 left-4 z-10">
                         <span class="bg-black/50 backdrop-blur-md text-white text-[9px] font-black px-3 py-1 rounded-full uppercase"><?php echo h($ad['cat_name']); ?></span>
                     </div>

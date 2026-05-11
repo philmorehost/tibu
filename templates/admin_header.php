@@ -100,6 +100,7 @@
                         <ul class="mt-4 space-y-1">
                             <li><a href="security.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'security.php' ? 'active' : ''; ?>"><i class="fas fa-shield-alt"></i> Security & Firewall</a></li>
                             <li><a href="payments.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'payments.php' ? 'active' : ''; ?>"><i class="fas fa-receipt"></i> Revenue & Payments</a></li>
+                            <li><a href="packages.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'packages.php' ? 'active' : ''; ?>"><i class="fas fa-box-open"></i> Package Plans</a></li>
                             <li><a href="settings.php" class="admin-nav-link <?php echo basename($_SERVER['PHP_SELF']) == 'settings.php' ? 'active' : ''; ?>"><i class="fas fa-cog"></i> Global Settings</a></li>
                         </ul>
                     </div>

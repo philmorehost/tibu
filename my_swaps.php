@@ -144,7 +144,7 @@ include __DIR__ . '/templates/header.php';
 function handleProposal(id, status) {
     if (!confirm(`Are you sure you want to mark this proposal as ${status}?`)) return;
 
-    fetch('api/swap_status.php', {
+    fetch('/api/swap_status.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `id=${id}&status=${status}`

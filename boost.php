@@ -22,19 +22,31 @@ if (isset($_GET['ad_id'])) {
 }
 
 // Get settings
-$stmt = $pdo->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('paystack_public_key', 'flutterwave_public_key', 'boost_price', 'bank_name', 'account_number', 'account_name')");
+$stmt = $pdo->query("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('paystack_public_key', 'flutterwave_public_key', 'bank_name', 'account_number', 'account_name', 'boost_price')");
 $settings = [];
 while ($row = $stmt->fetch()) {
     $settings[$row['setting_key']] = $row['setting_value'];
 }
-$boost_price = (float)($settings['boost_price'] ?? 2000);
+
+$tier = $_GET['tier'] ?? 'premium';
+if (!in_array($tier, ['premium', 'vip', 'diamond'])) $tier = 'premium';
+
+$packages = $pdo->query("SELECT * FROM packages ORDER BY price ASC")->fetchAll();
+$current_pkg = null;
+foreach ($packages as $p) {
+    if ($p['tier'] === $tier) {
+        $current_pkg = $p;
+        break;
+    }
+}
+$boost_price = (float)($current_pkg['price'] ?? 2000);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['bank_transfer'])) {
-    $filename = process_image_upload($_FILES['proof']['tmp_name'], __DIR__ . '/uploads/proofs', 800);
+    $filename = process_image_upload($_FILES['proof']['tmp_name'], __DIR__ . '/uploads/proofs', 800, 0, 0, false);
     if ($filename) {
-        $stmt = $pdo->prepare("INSERT INTO payments (user_id, ad_id, amount, method, reference, status, proof_image) VALUES (?, ?, ?, 'bank_transfer', ?, 'pending', ?)");
+        $stmt = $pdo->prepare("INSERT INTO payments (user_id, ad_id, amount, method, reference, status, proof_image, ad_tier) VALUES (?, ?, ?, 'bank_transfer', ?, 'pending', ?, ?)");
         $reference = 'BT-'.time().'-'.rand(100, 999);
-        $stmt->execute([$user_id, $ad_id, $boost_price, $reference, $filename]);
+        $stmt->execute([$user_id, $ad_id, $boost_price, $reference, $filename, $tier]);
         redirect('profile.php', 'Payment proof submitted! Your ad will be boosted after manual verification.');
     }
 }
@@ -43,9 +55,58 @@ include __DIR__ . '/templates/header.php';
 ?>
 
 <div class="container mx-auto px-4 py-10 flex justify-center">
-    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-xl">
-        <h1 class="text-2xl font-bold mb-8 text-primary-600 border-b pb-4"><i class="fas fa-rocket mr-2"></i> Boost Your Ad</h1>
-        <p class="mb-8 font-bold text-gray-700">Get 10x more views for <span class="text-primary-600">"<?php echo h($ad['title']); ?>"</span> by upgrading to a <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">Premium Boost</span>.</p>
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-4xl">
+        <h1 class="text-2xl font-bold mb-8 text-primary-600 border-b pb-4"><i class="fas fa-rocket mr-2"></i> Select Package for "<?php echo h($ad['title']); ?>"</h1>
+
+        <!-- Tier Selection -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <?php
+            $colors = ['premium' => 'blue', 'vip' => 'yellow', 'diamond' => 'purple'];
+            foreach ($packages as $p):
+                if ($p['tier'] === 'free') continue;
+                $color = $colors[$p['tier']] ?? 'primary';
+                $price_key = $p['tier'] . '_ad_price';
+                $duration_key = $p['tier'] . '_ad_duration';
+                $p_price = isset($settings[$price_key]) ? (float)$settings[$price_key] : (float)$p['price'];
+                $p_duration = isset($settings[$duration_key]) ? (int)$settings[$duration_key] : (int)$p['duration_days'];
+
+                if ($p['tier'] === 'premium') {
+                    $p_price = isset($settings['premium_ad_price']) ? (float)$settings['premium_ad_price'] : (isset($settings['boost_price']) ? (float)$settings['boost_price'] : $p_price);
+                    $p_duration = isset($settings['premium_ad_duration']) ? (int)$settings['premium_ad_duration'] : $p_duration;
+                }
+            ?>
+                <div class="flex flex-col border-2 rounded-2xl overflow-hidden transition <?php echo $tier === $p['tier'] ? "border-{$color}-600 shadow-xl" : "border-gray-100 opacity-60 grayscale hover:opacity-100 hover:grayscale-0"; ?>">
+                    <div class="p-4 bg-<?php echo $color; ?>-50 border-b flex justify-between items-center">
+                        <span class="text-sm font-black uppercase text-<?php echo $color; ?>-900"><?php echo h($p['name']); ?></span>
+                        <i class="fas fa-check-circle text-<?php echo $color; ?>-600 <?php echo $tier === $p['tier'] ? '' : 'hidden'; ?>"></i>
+                    </div>
+
+                    <div class="p-6 flex-1 bg-white">
+                        <div class="mb-6">
+                            <p class="text-3xl font-black text-gray-800">₦<?php echo number_format($p_price); ?></p>
+                            <p class="text-xs font-bold text-gray-400">per <?php echo $p_duration; ?> days</p>
+                        </div>
+
+                        <ul class="space-y-3 text-xs font-bold text-gray-600">
+                            <li class="flex justify-between"><span>Power-up:</span> <span class="text-<?php echo $color; ?>-600"><?php echo $p['power_up']; ?></span></li>
+                            <li class="flex justify-between"><span>Promo ads:</span> <span class="text-<?php echo $color; ?>-600"><?php echo $p['promo_ads_count']; ?> TOP+</span></li>
+                            <li class="flex justify-between"><span>Auto-renew:</span> <span class="text-<?php echo $color; ?>-600"><?php echo $p['auto_renew_hours'] ? 'Every ' . $p['auto_renew_hours'] . 'h' : 'Manual'; ?></span></li>
+                            <li class="flex justify-between"><span>Cashback:</span> <span class="text-green-600">₦<?php echo number_format($p['cashback']); ?></span></li>
+                            <?php if ($p['has_social_links']): ?> <li class="flex items-center gap-2"><i class="fas fa-check text-green-500"></i> Website/Social links</li> <?php endif; ?>
+                            <?php if ($p['has_personal_manager']): ?> <li class="flex items-center gap-2"><i class="fas fa-check text-green-500"></i> Personal Manager</li> <?php endif; ?>
+                            <?php if ($p['has_insights_report']): ?> <li class="flex items-center gap-2"><i class="fas fa-check text-green-500"></i> Insights Report</li> <?php endif; ?>
+                            <?php if ($p['has_pro_sales']): ?> <li class="flex items-center gap-2"><i class="fas fa-check text-green-500"></i> Access to Pro Sales</li> <?php endif; ?>
+                        </ul>
+                    </div>
+
+                    <a href="?ad_id=<?php echo $ad_id; ?>&tier=<?php echo $p['tier']; ?>" class="block p-4 text-center font-black uppercase text-xs <?php echo $tier === $p['tier'] ? "bg-{$color}-600 text-white" : "bg-gray-50 text-gray-400 hover:bg-gray-100"; ?>">
+                        <?php echo $tier === $p['tier'] ? 'Selected' : 'Select Plan'; ?>
+                    </a>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
         <div class="space-y-6">
             <!-- Online Payment -->
@@ -91,7 +152,7 @@ function payWithPaystack() {
         amount: <?php echo ($boost_price * 100); ?>, // In kobo
         currency: 'NGN',
         callback: function(response) {
-            window.location.href = 'api/payment_verify.php?method=paystack&ref=' + response.reference + '&ad_id=<?php echo $ad_id; ?>';
+            window.location.href = 'api/payment_verify.php?method=paystack&ref=' + response.reference + '&ad_id=<?php echo $ad_id; ?>&tier=<?php echo $tier; ?>';
         }
     });
     handler.openIframe();
@@ -105,7 +166,7 @@ function payWithFlutterwave() {
         currency: 'NGN',
         payment_options: 'card, banktransfer, ussd',
         callback: function (data) {
-            window.location.href = 'api/payment_verify.php?method=flutterwave&ref=' + data.transaction_id + '&ad_id=<?php echo $ad_id; ?>';
+            window.location.href = 'api/payment_verify.php?method=flutterwave&ref=' + data.transaction_id + '&ad_id=<?php echo $ad_id; ?>&tier=<?php echo $tier; ?>';
         }
     });
 }

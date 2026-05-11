@@ -16,19 +16,28 @@ $query = "SELECT a.*,
          JOIN states s ON a.state_id = s.id
          JOIN categories c ON a.cat_id = c.id
          JOIN users u ON a.user_id = u.id
-         WHERE a.status = 'active' AND a.is_featured = 0 AND u.is_suspended = 0";
+         WHERE a.status = 'active' AND u.is_suspended = 0";
 
 if ($cat_id > 0) {
-    $query .= " AND a.cat_id = $cat_id";
+    $query .= " AND (a.cat_id = $cat_id OR a.cat_id IN (SELECT id FROM categories WHERE parent_id = $cat_id))";
 }
 
 if ($type === 'swap') {
     $query .= " AND (a.listing_type = 'for_swap' OR a.listing_type = 'for_sale_or_swap')";
 }
 
-$query .= " ORDER BY a.bumped_at DESC LIMIT 20";
+$query .= " ORDER BY CASE a.ad_tier
+            WHEN 'diamond' THEN 1
+            WHEN 'vip' THEN 2
+            WHEN 'premium' THEN 3
+            ELSE 4 END ASC, a.bumped_at DESC LIMIT 20";
 
-$ads = $pdo->query($query)->fetchAll();
+try {
+    $ads = $pdo->query($query)->fetchAll();
+} catch (Exception $e) {
+    error_log("Trending API error: " . $e->getMessage());
+    $ads = [];
+}
 
 foreach ($ads as &$ad) {
     $ad['url'] = generate_ad_url($ad);

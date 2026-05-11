@@ -7,23 +7,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $id = (int)($_POST['id'] ?? 0);
     $title = $_POST['title'];
     $slug = $_POST['slug'] ?: strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
-    $summary = $_POST['summary'];
     $content = $_POST['content'];
+    $summary = !empty($_POST['summary']) ? $_POST['summary'] : truncate_words($content, 70);
+    $m_title = $_POST['meta_title'];
     $m_desc = $_POST['meta_desc'];
     $m_keys = $_POST['meta_keys'];
 
     // Handle Image
     $image = $_POST['current_image'] ?? null;
     if (!empty($_FILES['image']['tmp_name'])) {
-        $image = process_image_upload($_FILES['image']['tmp_name'], __DIR__ . '/../uploads/blog', 1200);
+        $image = process_image_upload($_FILES['image']['tmp_name'], __DIR__ . '/../uploads/blog', 1200, 0, 0, false);
     }
 
     if ($id) {
-        $stmt = $pdo->prepare("UPDATE blog_posts SET title = ?, slug = ?, summary = ?, content = ?, image = ?, meta_desc = ?, meta_keys = ? WHERE id = ?");
-        $stmt->execute([$title, $slug, $summary, $content, $image, $m_desc, $m_keys, $id]);
+        $stmt = $pdo->prepare("UPDATE blog_posts SET title = ?, slug = ?, summary = ?, content = ?, image = ?, meta_title = ?, meta_desc = ?, meta_keys = ? WHERE id = ?");
+        $stmt->execute([$title, $slug, $summary, $content, $image, $m_title, $m_desc, $m_keys, $id]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO blog_posts (title, slug, summary, content, image, meta_desc, meta_keys) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$title, $slug, $summary, $content, $image, $m_desc, $m_keys]);
+        $stmt = $pdo->prepare("INSERT INTO blog_posts (title, slug, summary, content, image, meta_title, meta_desc, meta_keys) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$title, $slug, $summary, $content, $image, $m_title, $m_desc, $m_keys]);
     }
     redirect('blog.php', 'Post saved successfully.');
 }
@@ -68,8 +69,8 @@ include __DIR__ . '/../templates/admin_header.php';
                 </div>
 
                 <div>
-                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Summary (Brief intro)</label>
-                    <textarea name="summary" rows="3" class="w-full p-3 border rounded-xl text-sm"><?php echo h($edit_post['summary'] ?? ''); ?></textarea>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">Summary (Leave empty to auto-generate first 70 words)</label>
+                    <textarea name="summary" rows="3" class="w-full p-3 border rounded-xl text-sm" placeholder="Optional: brief introduction..."><?php echo h($edit_post['summary'] ?? ''); ?></textarea>
                 </div>
 
                 <div>
@@ -77,7 +78,11 @@ include __DIR__ . '/../templates/admin_header.php';
                     <textarea name="content" rows="15" class="w-full p-4 border rounded-xl font-serif text-lg leading-relaxed"><?php echo h($edit_post['content'] ?? ''); ?></textarea>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                    <div>
+                        <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">SEO Title Tag</label>
+                        <input type="text" name="meta_title" value="<?php echo h($edit_post['meta_title'] ?? ''); ?>" class="w-full p-3 border rounded-xl text-xs">
+                    </div>
                     <div>
                         <label class="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2">SEO Description</label>
                         <textarea name="meta_desc" rows="3" class="w-full p-3 border rounded-xl text-xs"><?php echo h($edit_post['meta_desc'] ?? ''); ?></textarea>

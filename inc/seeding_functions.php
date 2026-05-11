@@ -83,6 +83,10 @@ function seed_categories($pdo) {
         'Seeking Work — CVs' => [
             'icon' => 'fa-id-card', 'is_top' => 0, 'order' => 16,
             'subs' => $jobs_subs
+        ],
+        'Sneakers' => [
+            'icon' => 'fa-shoe-prints', 'is_top' => 0, 'order' => 17,
+            'subs' => ['Jordans', 'Nike', 'Adidas', 'Puma', 'Reebok', 'Fila', 'Balenciaga']
         ]
     ];
 

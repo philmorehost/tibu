@@ -175,13 +175,19 @@ include __DIR__ . '/templates/header.php';
             <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 group">
                 <div class="relative aspect-square overflow-hidden rounded-xl">
                     <img src="<?php echo $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>" class="w-full h-full object-cover">
+                    <?php if ($ad['listing_type'] !== 'for_sale'): ?>
+                        <div class="absolute bottom-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl border border-blue-500 z-10"><i class="fas fa-sync-alt mr-1"></i> Swap</div>
+                    <?php endif; ?>
                     <span class="absolute top-4 left-4 text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md <?php
                         echo $ad['status'] == 'active' ? 'bg-primary-500 text-white' : ($ad['status'] == 'pending' ? 'bg-yellow-400 text-white' : ($ad['status'] == 'expired' ? 'bg-gray-700 text-white' : 'bg-red-500 text-white'));
                     ?>">
                         <?php echo $ad['status']; ?>
                     </span>
-                    <?php if ($ad['is_featured']): ?>
-                        <span class="absolute top-4 right-4 bg-yellow-400 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md"><i class="fas fa-rocket"></i> BOOSTED</span>
+                    <?php
+                    $tier_info = get_tier_info($ad['ad_tier'] ?? 'free');
+                    if ($tier_info):
+                    ?>
+                        <span class="absolute top-4 right-4 <?php echo $tier_info['badge']; ?> text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase shadow-md"><i class="fas fa-rocket"></i> <?php echo $tier_info['label']; ?></span>
                     <?php endif; ?>
                 </div>
                 <div class="p-5">
@@ -197,8 +203,8 @@ include __DIR__ . '/templates/header.php';
                         <?php endif; ?>
 
                         <div class="flex gap-2">
-                        <?php if (!$ad['is_featured'] && $ad['status'] == 'active'): ?>
-                            <a href="boost.php?ad_id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-primary-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition uppercase shadow-md tracking-wider">
+                        <?php if (($ad['ad_tier'] ?? 'free') === 'free' && $ad['status'] == 'active'): ?>
+                            <a href="/boost.php?ad_id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-primary-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition uppercase shadow-md tracking-wider">
                                 <?php echo ($ad['last_payment_status'] == 'failed') ? 'Retry Boost' : 'Boost Ad'; ?>
                             </a>
                         <?php endif; ?>

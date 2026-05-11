@@ -53,13 +53,13 @@ $total_revenue = $pdo->query("SELECT SUM(amount) FROM payments WHERE status = 's
                 <p class="text-[9px] text-gray-400 font-bold">Payouts</p>
             </div>
         </a>
-        <a href="security.php" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-lg hover:border-red-400 transition group">
+        <a href="support.php" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-lg hover:border-red-400 transition group">
             <div class="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600 group-hover:bg-red-600 group-hover:text-white transition">
-                <i class="fas fa-user-shield text-sm"></i>
+                <i class="fas fa-headset text-sm"></i>
             </div>
             <div>
-                <p class="text-[10px] font-black text-gray-800 uppercase">Security</p>
-                <p class="text-[9px] text-gray-400 font-bold">Firewall</p>
+                <p class="text-[10px] font-black text-gray-800 uppercase">Support</p>
+                <p class="text-[9px] text-gray-400 font-bold">Tickets</p>
             </div>
         </a>
     </div>

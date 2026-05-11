@@ -12,30 +12,29 @@ if (isset($_SESSION['user_id'])) {
 $error = null;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
-        $error = "CSRF token validation failed. Please try again.";
+    $email = $_POST['email'];
+    $password = $_POST['password'];
+
+    $brute = check_brute_force($email, 0);
+    if ($brute['blocked']) {
+        $error = "Too many failed attempts. Account suspended or IP blocked.";
     } else {
-        $email = $_POST['email'];
-        $password = $_POST['password'];
+        $stmt = $pdo->prepare("SELECT id, full_name, password, is_suspended FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
 
-        $brute = check_brute_force($email, 0);
-        if ($brute['blocked']) {
-            $error = "Too many failed attempts. Account suspended or IP blocked.";
+        if ($user && !$user['is_suspended'] && password_verify($password, $user['password'])) {
+            log_login_attempt($email, 0, 1);
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_name'] = $user['full_name'];
+
+            $redirect = $_SESSION['redirect_after_login'] ?? 'index.php';
+            unset($_SESSION['redirect_after_login']);
+            header("Location: $redirect");
+            exit;
         } else {
-            $stmt = $pdo->prepare("SELECT id, full_name, password, is_suspended FROM users WHERE email = ?");
-            $stmt->execute([$email]);
-            $user = $stmt->fetch();
-
-            if ($user && !$user['is_suspended'] && password_verify($password, $user['password'])) {
-                log_login_attempt($email, 0, 1);
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['user_name'] = $user['full_name'];
-                header('Location: index.php');
-                exit;
-            } else {
-                log_login_attempt($email, 0, 0);
-                $error = $user && $user['is_suspended'] ? "Account suspended." : "Invalid email or password.";
-            }
+            log_login_attempt($email, 0, 0);
+            $error = $user && $user['is_suspended'] ? "Account suspended." : "Invalid email or password.";
         }
     }
 }
@@ -52,7 +51,6 @@ include __DIR__ . '/templates/header.php';
         <?php endif; ?>
 
         <form method="POST">
-            <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
             <div class="mb-4">
                 <label class="block text-gray-700 font-bold mb-2">Email Address</label>
                 <input type="email" name="email" class="w-full p-3 border-2 border-gray-100 rounded-lg focus:border-primary-500 outline-none transition" placeholder="example@mail.com" required autofocus>
@@ -65,17 +63,75 @@ include __DIR__ . '/templates/header.php';
             <button type="submit" class="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 transition shadow-lg uppercase">Sign In</button>
         </form>
 
+        <?php
+        $google_active = ($settings['google_login_active'] ?? '0') == '1';
+        $google_client_id = $settings['google_client_id'] ?? '';
+        $facebook_active = ($settings['facebook_login_active'] ?? '0') == '1';
+        if ($google_active || $facebook_active):
+        ?>
         <div class="mt-8 border-t pt-6">
             <p class="text-center text-gray-500 font-bold text-sm mb-4">OR LOGIN WITH</p>
-            <div class="grid grid-cols-2 gap-4">
-                <a href="social.php?provider=google" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
-                    <i class="fab fa-google text-red-500 mr-2"></i> Google
-                </a>
-                <a href="social.php?provider=facebook" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
+            <div class="grid grid-cols-<?php echo ($google_active && $facebook_active) ? '2' : '1'; ?> gap-4">
+                <?php if ($google_active && !empty($google_client_id)): ?>
+                <div id="g_id_onload"
+                     data-client_id="<?php echo h($google_client_id); ?>"
+                     data-context="signin"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signin_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
+                <script>
+                function handleGoogleCredentialResponse(response) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'api/google_verify.php');
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            try {
+                                const res = JSON.parse(xhr.responseText);
+                                if (res.success) {
+                                    if (res.needs_phone) {
+                                        window.location.href = 'profile_edit.php?notice=please_add_phone';
+                                    } else {
+                                        // Retrieve redirect URL from PHP session (cookie) or fallback
+                                        <?php if(isset($_SESSION['redirect_after_login'])): ?>
+                                            window.location.href = '<?php echo $_SESSION['redirect_after_login']; ?>';
+                                        <?php else: ?>
+                                            window.location.href = 'index.php';
+                                        <?php endif; ?>
+                                    }
+                                } else {
+                                    alert(res.message || 'Login failed');
+                                }
+                            } catch (e) {
+                                alert('Error processing server response');
+                            }
+                        } else {
+                            alert('Google verification failed');
+                        }
+                    };
+                    xhr.send('id_token=' + response.credential);
+                }
+                </script>
+                <?php elseif ($google_active): ?>
+                <div class="text-[10px] text-red-500 text-center font-bold">Google Login Not Configured</div>
+                <?php endif; ?>
+                <?php if ($facebook_active): ?>
+                <a href="/social.php?provider=facebook" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition">
                     <i class="fab fa-facebook text-blue-600 mr-2"></i> Facebook
                 </a>
+                <?php endif; ?>
             </div>
         </div>
+        <?php endif; ?>
 
         <div class="mt-6 text-center text-gray-600 font-bold text-sm">
             Don't have an account? <a href="/register" class="text-primary-600 hover:underline">Register Now</a>

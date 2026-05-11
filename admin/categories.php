@@ -50,8 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($is_top) {
                 $top_count = $pdo->query("SELECT COUNT(*) FROM categories WHERE is_top = 1")->fetchColumn();
-                if ($top_count >= 4) {
-                    $error = "Maximum of 4 categories can be shown in the top grid. Please unstar another category first.";
+                if ($top_count >= 16) {
+                    $error = "Maximum of 16 categories can be shown in the top grid. Please unstar another category first.";
                     $is_top = 0;
                 }
             }
@@ -92,8 +92,8 @@ if (isset($_GET['toggle_top'])) {
 
     if (!$is_now_top) { // Trying to set it to top
         $top_count = $pdo->query("SELECT COUNT(*) FROM categories WHERE is_top = 1")->fetchColumn();
-        if ($top_count >= 4) {
-            header("Location: categories.php?error=" . urlencode("Maximum of 4 categories can be shown in the top grid."));
+        if ($top_count >= 16) {
+            header("Location: categories.php?error=" . urlencode("Maximum of 16 categories can be shown in the top grid."));
             exit;
         }
     }
@@ -129,7 +129,7 @@ include __DIR__ . '/../templates/admin_header.php';
             <div>
                 <?php $top_count = $pdo->query("SELECT COUNT(*) FROM categories WHERE is_top = 1")->fetchColumn(); ?>
                 <p class="text-[10px] font-black text-yellow-700 uppercase tracking-widest">Mobile Grid Slots</p>
-                <p class="text-xl font-black text-yellow-900"><?php echo $top_count; ?> / 4 used</p>
+                <p class="text-xl font-black text-yellow-900"><?php echo $top_count; ?> / 16 used</p>
             </div>
         </div>
     </div>
@@ -300,7 +300,9 @@ async function loadSubcategories(parentId) {
             noSubsMsg.classList.add('hidden');
             catStats.innerText = `${subs.length} Subcategories`;
 
+            const subDataMap = {};
             subs.forEach(sub => {
+                subDataMap[sub.id] = sub;
                 const card = document.createElement('div');
                 card.className = "group bg-white p-5 rounded-3xl border-2 border-gray-50 hover:border-primary-100 hover:shadow-lg hover:shadow-primary-500/5 transition-all flex items-center justify-between";
                 card.innerHTML = `
@@ -309,7 +311,7 @@ async function loadSubcategories(parentId) {
                         <p class="text-[9px] text-gray-400 font-bold uppercase tracking-widest mt-0.5">Order: ${sub.sort_order}</p>
                     </div>
                     <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onclick='openEditModal(${JSON.stringify(sub)})' class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition">
+                        <button onclick='openEditModalById(${sub.id})' class="w-8 h-8 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center hover:bg-blue-600 hover:text-white transition">
                             <i class="fas fa-edit text-[10px]"></i>
                         </button>
                         <form method="POST" onsubmit="return confirm('Delete this subcategory?')">
@@ -322,6 +324,7 @@ async function loadSubcategories(parentId) {
                 `;
                 subGrid.appendChild(card);
             });
+            window.currentSubDataMap = subDataMap;
         }
     } catch (e) {
         subGrid.innerHTML = '<div class="col-span-full text-center py-10 text-red-500 font-bold">Error loading subcategories.</div>';
@@ -337,6 +340,12 @@ function editMainCat(id) {
         sort_order: option.dataset.order,
         parent_id: 0
     });
+}
+
+function openEditModalById(id) {
+    if (window.currentSubDataMap && window.currentSubDataMap[id]) {
+        openEditModal(window.currentSubDataMap[id]);
+    }
 }
 
 function openAddModal(parentId) {

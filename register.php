@@ -3,6 +3,7 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/inc/functions.php';
 require_once __DIR__ . '/inc/security.php';
+require_once __DIR__ . '/inc/user_auth.php';
 
 if (isset($_SESSION['user_id'])) {
     header('Location: index.php');
@@ -27,23 +28,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($stmt->fetch()) {
                 $error = "Email already registered.";
             } else {
-                $otp = rand(100000, 999999);
-                $otp_expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+                $otp_enabled = ($settings['registration_otp_enabled'] ?? '1') == '1';
+                $password_hashed = password_hash($password, PASSWORD_DEFAULT);
 
-                $_SESSION['reg_data'] = [
-                    'full_name' => $full_name,
-                    'email' => $email,
-                    'phone' => $phone,
-                    'password' => password_hash($password, PASSWORD_DEFAULT),
-                    'otp' => $otp,
-                    'otp_expires' => $otp_expires
-                ];
+                if ($otp_enabled) {
+                    $otp = rand(100000, 999999);
+                    $otp_expires = date('Y-m-d H:i:s', strtotime('+10 minutes'));
 
-                if (send_otp($email, $otp)) {
-                    $show_otp = true;
+                    $_SESSION['reg_data'] = [
+                        'full_name' => $full_name,
+                        'email' => $email,
+                        'phone' => $phone,
+                        'password' => $password_hashed,
+                        'otp' => $otp,
+                        'otp_expires' => $otp_expires
+                    ];
+
+                    if (send_otp($email, $otp)) {
+                        $show_otp = true;
+                    } else {
+                        $error = "Failed to send OTP email. Please check your SMTP settings.";
+                    }
                 } else {
-                    $error = "Failed to send OTP email. Please check your SMTP settings.";
+                    // Register immediately
+                    $stmt = $pdo->prepare("INSERT INTO users (full_name, email, phone, password, is_verified) VALUES (?, ?, ?, ?, 1)");
+                    $stmt->execute([$full_name, $email, $phone, $password_hashed]);
+
+                    $_SESSION['user_id'] = $pdo->lastInsertId();
+                    $_SESSION['user_name'] = $full_name;
+                    header('Location: index.php');
+                    exit;
                 }
+            }
+        }
+    }
+
+    if (isset($_POST['resend_otp'])) {
+        $reg = $_SESSION['reg_data'] ?? null;
+        if ($reg) {
+            $otp = rand(100000, 999999);
+            $_SESSION['reg_data']['otp'] = $otp;
+            $_SESSION['reg_data']['otp_expires'] = date('Y-m-d H:i:s', strtotime('+10 minutes'));
+
+            if (send_otp($reg['email'], $otp)) {
+                $show_otp = true;
+                $flash_success = "Verification code resent!";
+            } else {
+                $error = "Failed to resend OTP. Check SMTP settings.";
             }
         }
     }
@@ -86,7 +117,13 @@ include __DIR__ . '/templates/header.php';
                     <label class="block text-gray-700 font-bold mb-2">Enter 6-Digit OTP</label>
                     <input type="text" name="otp" class="w-full p-4 text-center text-3xl font-bold tracking-[10px] border-2 border-primary-200 rounded-xl focus:border-primary-500 outline-none" placeholder="000000" maxlength="6" required autofocus>
                     <button type="submit" name="verify_otp" class="w-full mt-6 bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 transition shadow-lg uppercase">Verify & Create Account</button>
-                    <p class="mt-4 text-xs text-gray-400">Didn't receive it? <a href="#" class="text-primary-600 font-bold hover:underline">Resend OTP</a></p>
+                    <div class="mt-4 text-xs text-gray-400">
+                        Didn't receive it?
+                        <button type="submit" name="resend_otp" value="1" class="text-primary-600 font-bold hover:underline bg-transparent border-none p-0 cursor-pointer">Resend OTP</button>
+                    </div>
+                    <?php if (isset($flash_success)): ?>
+                        <p class="mt-2 text-xs text-green-600 font-bold"><?php echo h($flash_success); ?></p>
+                    <?php endif; ?>
                 </div>
             <?php else: ?>
             <div class="mb-4 text-sm font-bold text-gray-700">
@@ -113,6 +150,73 @@ include __DIR__ . '/templates/header.php';
             <button type="submit" name="register" class="w-full bg-primary-600 text-white py-3 rounded-lg font-bold hover:bg-primary-700 transition shadow-lg uppercase">Sign Up</button>
             <?php endif; ?>
         </form>
+
+        <?php if (!isset($show_otp)): ?>
+        <?php
+        $google_active = ($settings['google_login_active'] ?? '0') == '1';
+        $google_client_id = $settings['google_client_id'] ?? '';
+        $facebook_active = ($settings['facebook_login_active'] ?? '0') == '1';
+        if ($google_active || $facebook_active):
+        ?>
+        <div class="mt-8 border-t pt-6">
+            <p class="text-center text-gray-500 font-bold text-sm mb-4">OR CONTINUE WITH</p>
+            <div class="grid grid-cols-<?php echo ($google_active && $facebook_active) ? '2' : '1'; ?> gap-4">
+                <?php if ($google_active && !empty($google_client_id)): ?>
+                <div id="g_id_onload"
+                     data-client_id="<?php echo h($google_client_id); ?>"
+                     data-context="signup"
+                     data-ux_mode="popup"
+                     data-callback="handleGoogleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-shape="rectangular"
+                     data-theme="outline"
+                     data-text="signup_with"
+                     data-size="large"
+                     data-logo_alignment="left">
+                </div>
+                <script>
+                function handleGoogleCredentialResponse(response) {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('POST', 'api/google_verify.php');
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.onload = function() {
+                        if (xhr.status === 200) {
+                            try {
+                                const res = JSON.parse(xhr.responseText);
+                                if (res.success) {
+                                    if (res.needs_phone) {
+                                        window.location.href = 'profile_edit.php?notice=please_add_phone';
+                                    } else {
+                                        window.location.href = 'index.php';
+                                    }
+                                } else {
+                                    alert(res.message || 'Login failed');
+                                }
+                            } catch (e) {
+                                alert('Error processing server response');
+                            }
+                        } else {
+                            alert('Google verification failed');
+                        }
+                    };
+                    xhr.send('id_token=' + response.credential);
+                }
+                </script>
+                <?php elseif ($google_active): ?>
+                <div class="text-[10px] text-red-500 text-center font-bold">Google Login Not Configured</div>
+                <?php endif; ?>
+                <?php if ($facebook_active): ?>
+                <a href="/social.php?provider=facebook" class="flex items-center justify-center bg-white border-2 border-gray-200 py-2 rounded-lg hover:bg-gray-50 transition text-sm">
+                    <i class="fab fa-facebook text-blue-600 mr-2"></i> Facebook
+                </a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+        <?php endif; ?>
 
         <div class="mt-6 text-center text-gray-600 font-bold text-sm">
             Already have an account? <a href="/login" class="text-primary-600 hover:underline">Sign In</a>

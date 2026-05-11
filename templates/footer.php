@@ -7,24 +7,27 @@
         <div>
             <h4 class="font-bold text-lg mb-4 text-primary-500">Company</h4>
             <ul class="space-y-2 text-sm text-gray-400">
+                <li><a href="/page.php?slug=about-us" class="hover:text-white transition">About Tibu.ng</a></li>
                 <li><a href="/blog" class="hover:text-white transition">Marketplace Blog</a></li>
-                <li><a href="/contact" class="hover:text-white transition">Contact Us</a></li>
+                <li><a href="/vs/jiji" class="hover:text-white transition">Tibu vs Jiji</a></li>
+                <li><a href="/trust" class="hover:text-white transition">Trust & Safety</a></li>
             </ul>
         </div>
         <div>
             <h4 class="font-bold text-lg mb-4 text-primary-500">Links</h4>
             <ul class="space-y-2 text-sm text-gray-400">
-                <li><a href="/p/terms" class="hover:text-white transition">Terms & Conditions</a></li>
-                <li><a href="/p/privacy" class="hover:text-white transition">Privacy Policy</a></li>
-                <li><a href="/p/billing" class="hover:text-white transition">Billing Policy</a></li>
+                <li><a href="/packages.php" class="hover:text-white transition">Pricing Plans</a></li>
+                <li><a href="/page.php?slug=terms" class="hover:text-white transition">Terms & Conditions</a></li>
+                <li><a href="/page.php?slug=privacy" class="hover:text-white transition">Privacy Policy</a></li>
+                <li><a href="/page.php?slug=billing" class="hover:text-white transition">Billing Policy</a></li>
             </ul>
         </div>
         <div>
             <h4 class="font-bold text-lg mb-4 text-primary-500">Support</h4>
             <ul class="space-y-2 text-sm text-gray-400">
-                <li><a href="contact.php" class="hover:text-white transition">Contact Us</a></li>
-                <li><a href="/p/faq" class="hover:text-white transition">FAQ</a></li>
-                <li><a href="/p/safety" class="hover:text-white transition">Safety Tips</a></li>
+                <li><a href="/page.php?slug=contact" class="hover:text-white transition">Contact Us</a></li>
+                <li><a href="/page.php?slug=faq" class="hover:text-white transition">FAQ</a></li>
+                <li><a href="/page.php?slug=safety-tips" class="hover:text-white transition">Safety Tips</a></li>
             </ul>
         </div>
         <div>

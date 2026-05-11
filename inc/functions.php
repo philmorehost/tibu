@@ -29,29 +29,7 @@ foreach ($required_dirs as $dir) {
  * Sanitize output for XSS prevention
  */
 function h($string) {
-    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
-}
-
-/**
- * Generate and store CSRF token in session
- */
-function generate_csrf_token() {
-    if (session_status() === PHP_SESSION_NONE) session_start();
-    if (empty($_SESSION['csrf_token'])) {
-        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    }
-    return $_SESSION['csrf_token'];
-}
-
-/**
- * Verify CSRF token from request against session
- */
-function verify_csrf_token($token) {
-    if (session_status() === PHP_SESSION_NONE) session_start();
-    if (!isset($_SESSION['csrf_token']) || empty($token)) {
-        return false;
-    }
-    return hash_equals($_SESSION['csrf_token'], $token);
+    return htmlspecialchars((string)($string ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
 /**
@@ -79,9 +57,47 @@ function get_client_ip() {
 }
 
 /**
+ * Record Search History for Personalized Recommendations
+ */
+/**
+ * Truncate string by words
+ */
+function truncate_words($text, $limit = 70) {
+    $text = strip_tags($text);
+    $words = preg_split("/[\s]+/", $text, $limit + 1);
+    if (count($words) > $limit) {
+        array_pop($words);
+        return implode(' ', $words) . "...";
+    }
+    return implode(' ', $words);
+}
+
+function record_search_history($cat_id = null, $keyword = null) {
+    global $pdo;
+    if (!$cat_id && !$keyword) return;
+
+    if (isset($_SESSION['user_id'])) {
+        $stmt = $pdo->prepare("INSERT INTO search_history (user_id, cat_id, keyword) VALUES (?, ?, ?)");
+        $stmt->execute([$_SESSION['user_id'], $cat_id, $keyword]);
+    } else {
+        // Guest user - record in session
+        if (!isset($_SESSION['search_history'])) {
+            $_SESSION['search_history'] = [];
+        }
+        // Limit session history to last 5 entries
+        array_unshift($_SESSION['search_history'], [
+            'cat_id' => $cat_id,
+            'keyword' => $keyword,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+        $_SESSION['search_history'] = array_slice($_SESSION['search_history'], 0, 5);
+    }
+}
+
+/**
  * Image Upload & Processing (GD Library) - Enhanced with pHash & Watermark
  */
-function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id = 0, $ad_id = 0) {
+function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id = 0, $ad_id = 0, $watermark = true) {
     global $pdo;
     if (!is_dir($target_dir)) {
         mkdir($target_dir, 0755, true);
@@ -118,17 +134,20 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
         }
     }
 
-    // Apply Watermark
-    apply_site_watermark($src, $seller_info);
-
-    $filename = bin2hex(random_bytes(16)) . ".jpg";
+    $filename = md5(uniqid(rand(), true)) . ".jpg";
     $target_file = $target_dir . "/" . $filename;
 
-    $new_width = min($width, $max_width);
-    $new_height = ($height / $width) * $new_width;
+    $new_width = (int)min($width, $max_width);
+    $new_height = (int)(($height / $width) * $new_width);
     $tmp = imagecreatetruecolor($new_width, $new_height);
     imagecopyresampled($tmp, $src, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
-    imagejpeg($tmp, $target_file, 80);
+
+    // Apply Watermark to the resized image for better quality
+    if ($watermark) {
+        apply_site_watermark($tmp, $seller_info);
+    }
+
+    imagejpeg($tmp, $target_file, 85);
 
     // Save hash
     if ($pdo && $ad_id) {
@@ -217,12 +236,28 @@ function generate_phash($resource) {
 
 /**
  * Apply Site Watermark (Feature 06) - Dynamic with Site and Seller branding
+ * Jiji-style enhanced watermark
  */
 function apply_site_watermark($resource, $seller_info = "") {
     global $pdo;
     $width = imagesx($resource);
     $height = imagesy($resource);
-    $font_path = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf';
+    
+    // Improved Font Path Detection (Linux & Windows)
+    $font_paths = [
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        'C:\Windows\Fonts\arialbd.ttf',
+        'C:\Windows\Fonts\arial.ttf',
+        __DIR__ . '/../assets/fonts/DejaVuSans-Bold.ttf'
+    ];
+    
+    $font_path = '';
+    foreach ($font_paths as $path) {
+        if (file_exists($path)) {
+            $font_path = $path;
+            break;
+        }
+    }
 
     // Attempt to fetch site name for watermark
     static $site_name = null;
@@ -231,53 +266,98 @@ function apply_site_watermark($resource, $seller_info = "") {
             $stmt = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'site_name'");
             $site_name = $stmt->fetchColumn();
         } catch (Exception $e) {
-            $site_name = "Classifieds";
+            $site_name = "Tibung";
         }
     }
 
-    $site_text = $site_name ?: "Classifieds";
-    $white = imagecolorallocatealpha($resource, 255, 255, 255, 35); // Slightly lighter for complex text
+    $site_text = $site_name ?: "Tibung";
 
-    if (file_exists($font_path) && function_exists('imagettftext')) {
-        $font_size = $width / 14;
+    // Allocate Colors
+    $white = imagecolorallocate($resource, 255, 255, 255);
+    $black = imagecolorallocate($resource, 0, 0, 0);
+    $bg_alpha = imagecolorallocatealpha($resource, 0, 0, 0, 80); // Semi-transparent dark strip
 
-        // Main Centered Site Name
-        $bbox = imagettfbbox($font_size, 0, $font_path, $site_text);
-        $text_width = $bbox[2] - $bbox[0];
-        $text_height = $bbox[7] - $bbox[1];
-        $x = ($width / 2) - ($text_width / 2);
-        $y = ($height / 2) - ($text_height / 2);
-        imagettftext($resource, $font_size, 0, $x, $y, $white, $font_path, $site_text);
+    if ($font_path && function_exists('imagettftext')) {
+        // 1. MAIN CENTERED WATERMARK (Site Name + Seller Info)
+        // Increased font size: width / 4 (e.g. 200px for 800px image)
+        $center_font_size = (int)($width / 5); 
+        $center_color = imagecolorallocatealpha($resource, 255, 255, 255, 60); // More visible alpha
+        
+        // Calculate Site Name Bounding Box
+        $bbox_site = imagettfbbox($center_font_size, 0, $font_path, $site_text);
+        $sw = $bbox_site[2] - $bbox_site[0];
+        $sh = $bbox_site[1] - $bbox_site[7];
+        
+        $cx = (int)(($width / 2) - ($sw / 2));
+        $cy = (int)(($height / 2) + ($sh / 4)); // Shift up slightly for seller info
+        
+        // Draw Site Name
+        imagettftext($resource, $center_font_size, 0, $cx, $cy, $center_color, $font_path, $site_text);
+        
+        // Draw Seller Info below Site Name if available
+        if ($seller_info) {
+            $seller_font_size = (int)($center_font_size / 2.5);
+            $bbox_seller = imagettfbbox($seller_font_size, 0, $font_path, $seller_info);
+            $slw = $bbox_seller[2] - $bbox_seller[0];
+            $slx = (int)(($width / 2) - ($slw / 2));
+            $sly = (int)($cy + $sh / 1.5);
+            imagettftext($resource, $seller_font_size, 0, $slx, $sly, $center_color, $font_path, $seller_info);
+        }
 
-        // Bottom Right: Site Name + Seller Info (Business name)
-        $seller_text = $site_text . ($seller_info ? " | " . $seller_info : "");
-        $small_size = max(8, $width / 45);
-        $bbox_small = imagettfbbox($small_size, 0, $font_path, $seller_text);
-        $sx = $width - ($bbox_small[2] - $bbox_small[0]) - 20;
-        $sy = $height - 20;
-        imagettftext($resource, $small_size, 0, $sx, $sy, $white, $font_path, $seller_text);
-
-        // Tiled secondary watermarks (Jiji Style)
-        $tile_text = $site_text;
-        $tile_size = $small_size / 1.5;
-        $tile_color = imagecolorallocatealpha($resource, 255, 255, 255, 15);
-        for ($tx = 20; $tx < $width; $tx += ($width/3)) {
-            for ($ty = 30; $ty < $height; $ty += ($height/4)) {
-                imagettftext($resource, $tile_size, 45, $tx, $ty, $tile_color, $font_path, $tile_text);
+        // 2. Tiled Faint Watermarks (Keeping them but making them even fainter)
+        $tile_size = (int)max(12, $width / 30);
+        $tile_color = imagecolorallocatealpha($resource, 255, 255, 255, 110); 
+        for ($tx = -50; $tx < $width + 100; $tx += ($width/2)) {
+            for ($ty = -50; $ty < $height + 100; $ty += ($height/3)) {
+                imagettftext($resource, $tile_size, 30, (int)$tx, (int)$ty, $tile_color, $font_path, $site_text);
             }
         }
+
+        // 3. Bottom Branding Strip (Keep for professional look, but smaller)
+        $bottom_text = "Posted on " . $site_text;
+        $font_size = (int)max(14, $width / 25);
+        $bbox = imagettfbbox($font_size, 0, $font_path, $bottom_text);
+        $text_w = $bbox[2] - $bbox[0];
+        $text_h = $bbox[1] - $bbox[7];
+
+        $padding = (int)($height * 0.02);
+        $rect_h = $text_h + ($padding * 2);
+
+        imagefilledrectangle($resource, 0, $height - $rect_h, $width, $height, $bg_alpha);
+        $tx = (int)(($width / 2) - ($text_w / 2));
+        $ty = (int)($height - $padding);
+        imagettftext($resource, $font_size, 0, $tx + 1, $ty + 1, $black, $font_path, $bottom_text);
+        imagettftext($resource, $font_size, 0, $tx, $ty, $white, $font_path, $bottom_text);
+
     } else {
-        // Fallback to basic GD font
+        // Fallback to basic GD font (positioned in middle)
+        $main_text = $site_text . ($seller_info ? " - " . $seller_info : "");
         $font_size = 5;
-        $x = ($width / 2) - (strlen($site_text) * imagefontwidth($font_size) / 2);
-        $y = ($height / 2) - (imagefontheight($font_size) / 2);
-        imagestring($resource, $font_size, $x, $y, $site_text, $white);
+        $tx = (int)(($width / 2) - (strlen($main_text) * imagefontwidth($font_size) / 2));
+        $ty = (int)($height / 2);
+        
+        // Draw background for fallback
+        imagefilledrectangle($resource, 0, $ty - 10, $width, $ty + 20, $bg_alpha);
+        imagestring($resource, $font_size, $tx, $ty, $main_text, $white);
     }
 }
 
 /**
  * Calculate Deal Safety Score (Feature 08)
  */
+function get_tier_info($tier) {
+    switch ($tier) {
+        case 'diamond':
+            return ['label' => 'Diamond', 'color' => 'purple-600', 'bg' => 'bg-purple-600', 'badge' => 'bg-purple-600', 'border' => 'tier-diamond-border', 'shimmer' => true];
+        case 'vip':
+            return ['label' => 'VIP', 'color' => 'yellow-600', 'bg' => 'bg-yellow-500', 'badge' => 'bg-yellow-500', 'border' => 'tier-vip-border', 'shimmer' => false];
+        case 'premium':
+            return ['label' => 'Premium', 'color' => 'blue-600', 'bg' => 'bg-blue-600', 'badge' => 'bg-blue-600', 'border' => 'tier-premium-border', 'shimmer' => false];
+        default:
+            return null;
+    }
+}
+
 function calculate_safety_score($user, $ad) {
     $score = 0;
     if (($user['verification_tier'] ?? '') === 'nin_verified' || ($user['verification_tier'] ?? '') === 'business_verified') {

@@ -13,7 +13,7 @@ if (!$post) {
     exit;
 }
 
-$page_title = $post['title'] . " - Blog";
+$page_title = ($post['meta_title'] ?: $post['title']) . " | Tibu.ng Blog";
 $page_desc = $post['meta_desc'];
 $page_keywords = $post['meta_keys'];
 

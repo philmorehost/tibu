@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS ads (
     status ENUM('pending', 'active', 'declined', 'sold', 'swapped', 'expired', 'moderation') DEFAULT 'pending',
     safety_score INT DEFAULT 50,
     is_featured TINYINT(1) DEFAULT 0,
+    ad_tier ENUM('free', 'premium', 'vip', 'diamond') DEFAULT 'free',
     views INT DEFAULT 0,
     decline_reason TEXT,
     expires_at TIMESTAMP NULL DEFAULT NULL,
@@ -307,6 +308,17 @@ CREATE TABLE IF NOT EXISTS saved_ads (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (ad_id) REFERENCES ads(id) ON DELETE CASCADE,
     UNIQUE KEY (user_id, ad_id)
+);
+
+-- Messages (Chat)
+CREATE TABLE IF NOT EXISTS messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sender_id INT NOT NULL,
+    receiver_id INT NOT NULL,
+    ad_id INT NOT NULL,
+    message TEXT NOT NULL,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Search History
