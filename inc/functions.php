@@ -296,12 +296,26 @@ function apply_site_watermark($resource, $seller_info = "") {
         
         // Draw Seller Info below Site Name if available
         if ($seller_info) {
-            $seller_font_size = (int)($center_font_size / 2.5);
-            $bbox_seller = imagettfbbox($seller_font_size, 0, $font_path, $seller_info);
+            $seller_text = strtoupper($seller_info);
+            $seller_font_size = (int)($center_font_size / 3);
+            $bbox_seller = imagettfbbox($seller_font_size, 0, $font_path, $seller_text);
             $slw = $bbox_seller[2] - $bbox_seller[0];
+            $slh = $bbox_seller[1] - $bbox_seller[7];
+            
             $slx = (int)(($width / 2) - ($slw / 2));
-            $sly = (int)($cy + $sh / 1.5);
-            imagettftext($resource, $seller_font_size, 0, $slx, $sly, $center_color, $font_path, $seller_info);
+            $sly = (int)($cy + $sh / 1.2); // Positioned nicely below the main site name
+            
+            // Draw a subtle "strip" background for the seller name
+            $strip_padding = (int)($seller_font_size * 0.4);
+            $strip_y1 = $sly - $slh - $strip_padding;
+            $strip_y2 = $sly + $strip_padding;
+            $strip_alpha = imagecolorallocatealpha($resource, 0, 0, 0, 90); // Subtle dark strip
+            
+            imagefilledrectangle($resource, (int)($width * 0.1), $strip_y1, (int)($width * 0.9), $strip_y2, $strip_alpha);
+            
+            // Draw Seller Name with a slight shadow for readability
+            imagettftext($resource, $seller_font_size, 0, $slx + 1, $sly + 1, $black, $font_path, $seller_text);
+            imagettftext($resource, $seller_font_size, 0, $slx, $sly, $white, $font_path, $seller_text);
         }
 
         // 2. Tiled Faint Watermarks (Keeping them but making them even fainter)
