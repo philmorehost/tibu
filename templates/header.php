@@ -11,18 +11,7 @@ if (isset($pdo)) {
     require_once __DIR__ . '/../inc/security.php';
 }
 
-// Fetch global settings for site name, etc.
-if (isset($pdo)) {
-    try {
-        $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
-        $settings = [];
-        while ($row = $stmt->fetch()) {
-            $settings[$row['setting_key']] = $row['setting_value'];
-        }
-    } catch (Exception $e) {
-        $settings = [];
-    }
-}
+// Global settings are now fetched in inc/functions.php
 ?>
 <!DOCTYPE html>
 <html lang="en">

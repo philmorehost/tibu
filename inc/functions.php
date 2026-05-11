@@ -25,6 +25,19 @@ foreach ($required_dirs as $dir) {
     }
 }
 
+// Global Site Settings
+$settings = [];
+if (isset($pdo)) {
+    try {
+        $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
+        while ($row = $stmt->fetch()) {
+            $settings[$row['setting_key']] = $row['setting_value'];
+        }
+    } catch (Exception $e) {
+        // Fallback or log error
+    }
+}
+
 /**
  * Sanitize output for XSS prevention
  */
