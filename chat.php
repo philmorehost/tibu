@@ -28,14 +28,8 @@ if ($ad_id > 0) {
         $receiver_id = $ad['user_id'];
     }
 
-    if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['message'])) {
-        $message = trim($_POST['message']);
-        $stmt = $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, ad_id, message) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$user_id, $receiver_id, $ad_id, $message]);
-
-        $redirect_url = "/chat.php?ad_id=$ad_id&user_id=$receiver_id";
-        redirect($redirect_url, 'Message sent.');
-    }
+    // PHP Fallback removed in favor of AJAX. 
+    // Logic moved to api/send_message.php
 
     // Mark messages as read
     try {
@@ -49,6 +43,9 @@ if ($ad_id > 0) {
     $stmt = $pdo->prepare("SELECT * FROM messages WHERE ad_id = ? AND ((sender_id = ? AND receiver_id = ?) OR (sender_id = ? AND receiver_id = ?)) ORDER BY created_at ASC");
     $stmt->execute([$ad_id, $user_id, $receiver_id, $receiver_id, $user_id]);
     $messages = $stmt->fetchAll();
+    
+    // Get last message ID for AJAX polling
+    $last_msg_id = !empty($messages) ? end($messages)['id'] : 0;
 
     // Fetch partner info
     $stmt_p = $pdo->prepare("SELECT full_name, verification_tier FROM users WHERE id = ?");
@@ -354,16 +351,12 @@ include __DIR__ . '/templates/header.php';
 
     if (chatBox) {
         chatBox.scrollTop = chatBox.scrollHeight;
-        // Scroll again after a short delay for mobile browsers
-        setTimeout(() => {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }, 100);
+        setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 100);
     }
 
     function setQuickReply(text) {
         messageInput.value = text;
         messageInput.focus();
-        // Auto-expand textarea
         messageInput.style.height = 'auto';
         messageInput.style.height = messageInput.scrollHeight + 'px';
     }
@@ -378,12 +371,87 @@ include __DIR__ . '/templates/header.php';
         messageInput.focus();
     }
 
-    // Auto-resize textarea
     if (messageInput) {
         messageInput.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = (this.scrollHeight) + 'px';
         });
+    }
+
+    // AJAX CHAT LOGIC
+    const adId = <?php echo $ad_id; ?>;
+    const receiverId = <?php echo $receiver_id ?? 0; ?>;
+    const currentUserId = <?php echo $user_id; ?>;
+    let lastMsgId = <?php echo $last_msg_id ?? 0; ?>;
+
+    const chatForm = document.getElementById('chatForm');
+
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            // Optimistic UI: Clear input and show message immediately
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            
+            const formData = new FormData();
+            formData.append('ad_id', adId);
+            formData.append('receiver_id', receiverId);
+            formData.append('message', message);
+
+            fetch('/api/send_message.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    renderMessage(res.data, true);
+                    if (res.data.id > lastMsgId) lastMsgId = res.data.id;
+                } else {
+                    alert('Failed to send: ' + res.message);
+                }
+            })
+            .catch(err => {
+                console.error('Send error:', err);
+                alert('Connection error. Please try again.');
+            });
+        });
+    }
+
+    function renderMessage(msg, isMe) {
+        const div = document.createElement('div');
+        div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} group`;
+        div.innerHTML = `
+            <div class="message-bubble ${isMe ? 'message-me' : 'message-other'}">
+                ${msg.message}
+            </div>
+            <div class="flex items-center gap-2 mt-1 px-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span class="text-[9px] font-black text-gray-400">${msg.created_at}</span>
+                ${isMe ? '<i class="fas fa-check-double text-[9px] text-gray-300"></i>' : ''}
+            </div>
+        `;
+        chatBox.appendChild(div);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // Polling for new messages
+    if (adId > 0) {
+        setInterval(() => {
+            fetch(`/api/get_messages.php?ad_id=${adId}&partner_id=${receiverId}&last_id=${lastMsgId}`)
+            .then(res => res.json())
+            .then(res => {
+                if (res.success && res.messages.length > 0) {
+                    res.messages.forEach(msg => {
+                        renderMessage(msg, false);
+                        if (msg.id > lastMsgId) lastMsgId = msg.id;
+                    });
+                }
+            })
+            .catch(err => console.error('Poll error:', err));
+        }, 3000); // Poll every 3 seconds
     }
 
     // Close emoji picker when clicking outside
