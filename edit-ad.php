@@ -21,6 +21,11 @@ if (!$ad) {
     redirect('profile.php', 'Ad not found or access denied.');
 }
 
+// Fetch existing images
+$stmt_imgs = $pdo->prepare("SELECT * FROM ad_images WHERE ad_id = ?");
+$stmt_imgs->execute([$ad_id]);
+$existing_images = $stmt_imgs->fetchAll();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $title = $_POST['title'];
@@ -52,12 +57,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // Handle new images if any
     if (!empty($_FILES['images']['name'][0])) {
-        $pdo->prepare("DELETE FROM ad_images WHERE ad_id = ?")->execute([$ad_id]);
-
         foreach ($_FILES['images']['tmp_name'] as $key => $tmp_name) {
+            if (empty($tmp_name)) continue;
+            
             $filename = process_image_upload($tmp_name, __DIR__ . '/uploads/ads', 800, $user_id, $ad_id);
             if ($filename) {
-                $is_main = ($key === 0) ? 1 : 0;
+                // If no images exist, make the first one main
+                $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM ad_images WHERE ad_id = ?");
+                $stmt_check->execute([$ad_id]);
+                $has_images = $stmt_check->fetchColumn() > 0;
+                
+                $is_main = (!$has_images && $key === 0) ? 1 : 0;
                 $stmt = $pdo->prepare("INSERT INTO ad_images (ad_id, image_path, is_main) VALUES (?, ?, ?)");
                 $stmt->execute([$ad_id, $filename, $is_main]);
             }
@@ -185,14 +195,37 @@ include __DIR__ . '/templates/header.php';
                 <textarea name="description" rows="5" class="w-full p-3 border rounded-lg focus:border-primary-500 outline-none" required><?php echo h($ad['description']); ?></textarea>
             </div>
 
+            <div class="mb-6">
+                <label class="block text-gray-700 font-black mb-4 text-xs uppercase tracking-widest">Existing Photos</label>
+                <?php if (empty($existing_images)): ?>
+                    <p class="text-gray-400 text-xs italic">No photos uploaded yet.</p>
+                <?php else: ?>
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        <?php foreach ($existing_images as $img): ?>
+                            <div class="relative group aspect-square rounded-2xl overflow-hidden border-2 border-gray-100 shadow-sm" id="img-<?php echo $img['id']; ?>">
+                                <img src="/uploads/ads/<?php echo h($img['image_path']); ?>" class="w-full h-full object-cover">
+                                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                                    <button type="button" onclick="deleteExistingImage(<?php echo $img['id']; ?>)" class="bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-600 transition shadow-lg">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                                <?php if ($img['is_main']): ?>
+                                    <span class="absolute top-2 left-2 bg-green-500 text-white text-[8px] font-black px-2 py-1 rounded-lg uppercase shadow-sm">Main</span>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
             <div id="dropZone" class="mb-4 p-8 border-4 border-dashed border-gray-200 rounded-2xl bg-gray-50 hover:bg-white transition cursor-pointer relative group">
-                <label class="block text-gray-700 font-bold mb-4 text-sm text-center">Update Photos (Optional - Max 10)</label>
+                <label class="block text-gray-700 font-bold mb-4 text-sm text-center">Add More Photos (Max 10 total)</label>
                 <input type="file" name="images[]" id="fileInput" multiple accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                 <div class="text-center">
-                    <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-camera-retro text-3xl text-primary-500"></i>
+                    <div class="w-16 h-16 bg-primary-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-plus text-2xl text-primary-500"></i>
                     </div>
-                    <p class="text-sm font-bold text-gray-600 mb-1">Drag or click to replace photos</p>
+                    <p class="text-sm font-bold text-gray-600 mb-1">Drag or click to add photos</p>
                 </div>
             </div>
 
@@ -340,24 +373,50 @@ function removeFile(index) {
     fileInput.files = allFiles.files;
     renderPreviews();
 }
-function renderPreviews() {
-    previewContainer.innerHTML = '';
-    if (allFiles.files.length === 0) { previewContainer.classList.add('hidden'); return; }
-    previewContainer.classList.remove('hidden');
-    Array.from(allFiles.files).forEach((file, i) => {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const div = document.createElement('div');
-            div.className = 'relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm';
-            div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">
-                <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                    <button type="button" onclick="removeFile(${i})" class="bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-600"><i class="fas fa-trash-alt text-[10px]"></i></button>
-                </div>`;
-            previewContainer.appendChild(div);
-        };
-        reader.readAsDataURL(file);
-    });
-}
+    function renderPreviews() {
+        previewContainer.innerHTML = '';
+        if (allFiles.files.length === 0) { previewContainer.classList.add('hidden'); return; }
+        previewContainer.classList.remove('hidden');
+        Array.from(allFiles.files).forEach((file, i) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const div = document.createElement('div');
+                div.className = 'relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-100 shadow-sm';
+                div.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                        <button type="button" onclick="removeFile(${i})" class="bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center hover:bg-red-600"><i class="fas fa-trash-alt text-[10px]"></i></button>
+                    </div>`;
+                previewContainer.appendChild(div);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function deleteExistingImage(imageId) {
+        if (!confirm('Are you sure you want to delete this image?')) return;
+
+        const formData = new FormData();
+        formData.append('image_id', imageId);
+
+        fetch('/api/delete_ad_image.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                const el = document.getElementById(`img-${imageId}`);
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            } else {
+                alert('Error: ' + res.message);
+            }
+        })
+        .catch(err => {
+            console.error('Delete error:', err);
+            alert('Failed to delete image.');
+        });
+    }
 </script>
 
 <?php include __DIR__ . '/templates/footer.php'; ?>
