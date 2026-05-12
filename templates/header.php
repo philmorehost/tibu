@@ -136,6 +136,9 @@ if (isset($pdo)) {
     <meta property="og:description" content="<?php echo h($og_desc); ?>">
     <meta property="og:image" content="<?php echo isset($ad["image"]) ? "/uploads/ads/".$ad["image"] : "/assets/img/og-image.png"; ?>">
     <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <?php if (!empty($settings['custom_header_scripts'])): ?>
+        <?php echo $settings['custom_header_scripts']; ?>
+    <?php endif; ?>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <nav class="bg-white shadow-sm border-b sticky top-0 z-50">

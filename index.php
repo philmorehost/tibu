@@ -266,6 +266,13 @@ window.addEventListener('load', () => {
                     <?php endforeach; ?>
                 </div>
             </section>
+            <?php if (!empty($settings['google_ad_code'])): ?>
+            <div class="mb-16 flex justify-center">
+                <div class="w-full max-w-4xl bg-white p-4 rounded-2xl shadow-sm border border-gray-100 overflow-hidden text-center">
+                    <?php echo $settings['google_ad_code']; ?>
+                </div>
+            </div>
+            <?php endif; ?>
             <?php endif; ?>
 
             <!-- Recommendations & New For You Section (Based on History) -->

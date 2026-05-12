@@ -341,6 +341,14 @@ include __DIR__ . '/templates/header.php';
                     </div>
                 </div>
 
+                <?php if (!empty($settings['google_ad_code'])): ?>
+                <div class="mt-10 flex justify-center">
+                    <div class="w-full bg-white p-4 rounded-3xl shadow-sm border border-gray-100 overflow-hidden text-center">
+                        <?php echo $settings['google_ad_code']; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
                 <div class="mt-10 p-6 bg-yellow-50 rounded-3xl border border-yellow-100">
                     <h5 class="text-[10px] font-black text-yellow-800 uppercase mb-4 tracking-widest flex items-center gap-2"><i class="fas fa-lightbulb"></i> Safety Tips</h5>
                     <ul class="text-[11px] text-yellow-700 font-bold space-y-3">

@@ -15,6 +15,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        // Handle ads.txt upload
+        if (!empty($_FILES['ads_txt']['name'])) {
+            $file_ext = pathinfo($_FILES['ads_txt']['name'], PATHINFO_EXTENSION);
+            if (strtolower($file_ext) === 'txt') {
+                move_uploaded_file($_FILES['ads_txt']['tmp_name'], __DIR__ . '/../ads.txt');
+            }
+        }
+
         $stmt = $pdo->prepare("INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)");
         foreach ($_POST['s'] as $key => $value) {
             $stmt->execute([$key, $value]);
@@ -261,6 +269,32 @@ include __DIR__ . '/../templates/admin_header.php';
                                 <?php echo (isset($_SERVER['HTTPS']) ? "https" : "http") . "://$_SERVER[HTTP_HOST]"; ?>/social.php?provider=facebook
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Advanced Scripts & Ads -->
+        <h3 class="font-bold text-lg mt-12 mb-4 text-primary-700">Advanced Scripts & Monetization</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                <label class="block text-gray-700 font-black text-[10px] uppercase tracking-[2px] mb-4">Custom Header Scripts (Analytics, Pixels, etc.)</label>
+                <textarea name="s[custom_header_scripts]" rows="8" class="w-full p-4 border rounded-xl font-mono text-xs bg-gray-900 text-green-400 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="<script>... analytics code ...</script>"><?php echo h($settings['custom_header_scripts'] ?? ''); ?></textarea>
+                <p class="text-[9px] text-gray-400 mt-2 italic">These scripts will be injected before the closing </head> tag on every page.</p>
+            </div>
+            
+            <div class="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                <label class="block text-gray-700 font-black text-[10px] uppercase tracking-[2px] mb-4">Google AdSense / Global Ad Code</label>
+                <textarea name="s[google_ad_code]" rows="8" class="w-full p-4 border rounded-xl font-mono text-xs bg-gray-900 text-yellow-400 focus:ring-2 focus:ring-primary-500 outline-none" placeholder="<ins class='adsbygoogle' ...></ins>"><?php echo h($settings['google_ad_code'] ?? ''); ?></textarea>
+                <p class="text-[9px] text-gray-400 mt-2 italic">Global advertisement code that can be placed in ad slots across the site.</p>
+                
+                <div class="mt-6 pt-6 border-t border-gray-200">
+                    <label class="block text-gray-700 font-black text-[10px] uppercase tracking-[2px] mb-2 text-primary-600">Upload ads.txt</label>
+                    <div class="flex items-center gap-4">
+                        <input type="file" name="ads_txt" accept=".txt" class="text-[10px] file:bg-primary-50 file:text-primary-700 file:border-0 file:py-2 file:px-4 file:rounded-full hover:file:bg-primary-100 transition">
+                        <?php if (file_exists(__DIR__ . '/../ads.txt')): ?>
+                            <span class="text-green-600 font-black text-[9px] uppercase"><i class="fas fa-check-circle mr-1"></i> Current ads.txt Found</span>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
