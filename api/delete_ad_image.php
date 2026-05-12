@@ -41,6 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("DELETE FROM ad_images WHERE id = ?");
         $stmt->execute([$image_id]);
 
+        // Clean up perceptual hash to allow re-upload
+        $stmt_h = $pdo->prepare("DELETE FROM image_hashes WHERE ad_id = ? AND image_path = ?");
+        $stmt_h->execute([$image['ad_id'], $image['image_path']]);
+
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);

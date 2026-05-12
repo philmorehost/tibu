@@ -16,7 +16,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Handle Image
     $image = $_POST['current_image'] ?? null;
     if (!empty($_FILES['image']['tmp_name'])) {
-        $image = process_image_upload($_FILES['image']['tmp_name'], __DIR__ . '/../uploads/blog', 1200, 0, 0, false);
+        $img_result = process_image_upload($_FILES['image']['tmp_name'], __DIR__ . '/../uploads/blog', 1200, 0, 0, false);
+        if ($img_result && $img_result !== "DUPLICATE") {
+            $image = $img_result;
+        }
     }
 
     if ($id) {

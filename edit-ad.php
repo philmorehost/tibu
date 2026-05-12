@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (empty($tmp_name)) continue;
             
             $filename = process_image_upload($tmp_name, __DIR__ . '/uploads/ads', 800, $user_id, $ad_id);
-            if ($filename) {
+            if ($filename && $filename !== "DUPLICATE") {
                 // If no images exist, make the first one main
                 $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM ad_images WHERE ad_id = ?");
                 $stmt_check->execute([$ad_id]);

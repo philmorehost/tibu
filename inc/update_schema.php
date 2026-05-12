@@ -91,6 +91,9 @@ $tables = [
     'pages' => [
         'title' => "VARCHAR(150) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL",
         'content' => "LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    ],
+    'image_hashes' => [
+        'image_path' => "VARCHAR(255) DEFAULT NULL AFTER phash"
     ]
 ];
 
@@ -194,6 +197,7 @@ $missing_tables = [
         ad_id INT,
         user_id INT,
         phash VARCHAR(64) NOT NULL,
+        image_path VARCHAR(255) DEFAULT NULL,
         uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         INDEX (phash),
         FOREIGN KEY (ad_id) REFERENCES ads(id) ON DELETE CASCADE

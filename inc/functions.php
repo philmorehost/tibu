@@ -164,7 +164,7 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
 
     // Save hash
     if ($pdo && $ad_id) {
-        $pdo->prepare("INSERT INTO image_hashes (ad_id, user_id, phash) VALUES (?, ?, ?)")->execute([$ad_id, $user_id, $phash]);
+        $pdo->prepare("INSERT INTO image_hashes (ad_id, user_id, phash, image_path) VALUES (?, ?, ?, ?)")->execute([$ad_id, $user_id, $phash, $filename]);
     }
 
     imagedestroy($src);
