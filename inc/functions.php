@@ -111,6 +111,7 @@ function record_search_history($cat_id = null, $keyword = null) {
  * Image Upload & Processing (GD Library) - Enhanced with pHash & Watermark
  */
 function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id = 0, $ad_id = 0, $watermark = true) {
+    global $pdo;
     // Ensure directory exists and is writable
     if (!is_dir($target_dir)) {
         mkdir($target_dir, 0755, true);
