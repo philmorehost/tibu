@@ -111,9 +111,13 @@ function record_search_history($cat_id = null, $keyword = null) {
  * Image Upload & Processing (GD Library) - Enhanced with pHash & Watermark
  */
 function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id = 0, $ad_id = 0, $watermark = true) {
-    global $pdo;
+    // Ensure directory exists and is writable
     if (!is_dir($target_dir)) {
         mkdir($target_dir, 0755, true);
+    }
+    if (!is_writable($target_dir)) {
+        error_log("Upload directory not writable: " . $target_dir);
+        return false;
     }
 
     list($width, $height, $type) = getimagesize($file_tmp);
@@ -125,11 +129,12 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
         default: return false;
     }
 
-    // Perceptual Hash Check
+    // Perceptual Hash Check - Prevent spam/duplicate content
     $phash = generate_phash($src);
     if ($pdo) {
-        $stmt = $pdo->prepare("SELECT id FROM image_hashes WHERE phash = ?");
-        $stmt->execute([$phash]);
+        // Only block if the exact same image exists for a DIFFERENT ad OR a DIFFERENT user
+        $stmt = $pdo->prepare("SELECT id FROM image_hashes WHERE phash = ? AND (ad_id != ? OR user_id != ?)");
+        $stmt->execute([$phash, $ad_id, $user_id]);
         if ($stmt->fetch()) {
             imagedestroy($src);
             return "DUPLICATE";

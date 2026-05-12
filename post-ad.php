@@ -108,11 +108,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->prepare("UPDATE ads SET safety_score = ? WHERE id = ?")->execute([$safety_score, $ad_id]);
 
         // Process Images
+        $skipped_count = 0;
         if (!empty($_FILES['images']['name'][0])) {
             foreach ($_FILES['images']['tmp_name'] as $key => $tmp_name) {
                 if ($key >= 10) break; // Max 10 photos
                 $filename = process_image_upload($tmp_name, __DIR__ . '/uploads/ads', 800, $user_id, $ad_id);
                 if ($filename === "DUPLICATE") {
+                    $skipped_count++;
                     continue; // Skip duplicate photos
                 }
                 if ($filename) {
@@ -128,7 +130,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect("/boost.php?ad_id=$ad_id&tier=$tier", "Ad saved! Please complete payment to activate your " . ucfirst($tier) . " package.");
         }
 
-        redirect('/profile.php', 'Ad posted successfully! It will be live after moderation.');
+        $msg = 'Ad posted successfully! It will be live after moderation.';
+        if ($skipped_count > 0) {
+            $msg .= " Note: $skipped_count duplicate image(s) were skipped.";
+        }
+        redirect('/profile.php', $msg);
     } catch (Exception $e) {
         error_log("Post Ad Error: " . $e->getMessage());
         $error = "An error occurred while posting your ad. " . $e->getMessage();

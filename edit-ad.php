@@ -56,12 +56,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
     // Handle new images if any
+    $skipped_count = 0;
     if (!empty($_FILES['images']['name'][0])) {
         foreach ($_FILES['images']['tmp_name'] as $key => $tmp_name) {
             if (empty($tmp_name)) continue;
             
+            // Limit check
+            $stmt_count = $pdo->prepare("SELECT COUNT(*) FROM ad_images WHERE ad_id = ?");
+            $stmt_count->execute([$ad_id]);
+            if ($stmt_count->fetchColumn() >= 10) break;
+
             $filename = process_image_upload($tmp_name, __DIR__ . '/uploads/ads', 800, $user_id, $ad_id);
-            if ($filename && $filename !== "DUPLICATE") {
+            if ($filename === "DUPLICATE") {
+                $skipped_count++;
+                continue;
+            }
+            if ($filename) {
                 // If no images exist, make the first one main
                 $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM ad_images WHERE ad_id = ?");
                 $stmt_check->execute([$ad_id]);
@@ -74,7 +84,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-        redirect('profile.php', 'Ad updated and re-submitted for moderation.');
+    $msg = 'Ad updated and re-submitted for moderation.';
+    if ($skipped_count > 0) {
+        $msg .= " Note: $skipped_count duplicate image(s) were skipped.";
+    }
+    redirect('profile.php', $msg);
     } catch (PDOException $e) {
         error_log("Edit Ad Error: " . $e->getMessage());
         $error = "An error occurred while updating your ad. Database Error: " . $e->getMessage();
