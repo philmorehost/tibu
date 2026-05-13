@@ -208,12 +208,15 @@ include __DIR__ . '/templates/header.php';
                                 <?php echo ($ad['last_payment_status'] == 'failed') ? 'Retry Boost' : 'Boost Ad'; ?>
                             </a>
                         <?php endif; ?>
+                        <div class="flex gap-2">
                         <?php if ($ad['status'] != 'sold' && $ad['status'] != 'expired'): ?>
-                            <a href="edit-ad.php?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-yellow-500 text-white py-2 rounded-lg text-xs font-bold hover:bg-yellow-600 transition uppercase shadow-md tracking-wider">Edit</a>
+                            <a href="edit-ad.php?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-yellow-500 text-white py-2 rounded-lg text-[10px] font-bold hover:bg-yellow-600 transition uppercase shadow-md tracking-wider">Edit</a>
                         <?php else: ?>
-                            <a href="api/republish.php?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-blue-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-blue-700 transition uppercase shadow-md tracking-wider">Republish</a>
+                            <a href="api/republish.php?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-blue-600 text-white py-2 rounded-lg text-[10px] font-bold hover:bg-blue-700 transition uppercase shadow-md tracking-wider">Republish</a>
                         <?php endif; ?>
-                        <a href="<?php echo generate_ad_url($ad); ?>" class="flex-1 text-center bg-gray-100 text-gray-600 py-2 rounded-lg text-xs font-bold hover:bg-gray-200 transition uppercase tracking-wider border border-gray-200">View</a>
+                        <a href="<?php echo generate_ad_url($ad); ?>" class="flex-1 text-center bg-gray-100 text-gray-600 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-200 transition uppercase tracking-wider border border-gray-200">View</a>
+                        <button onclick="confirmDelete(<?php echo $ad['id']; ?>, <?php echo ($ad['ad_tier'] != 'free' && $ad['ad_tier'] !== null ? 'true' : 'false'); ?>)" class="flex-1 text-center bg-red-50 text-red-600 py-2 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase shadow-sm tracking-wider border border-red-100">Delete</button>
+                    </div>
                     </div>
                     </div>
                 </div>
@@ -252,6 +255,93 @@ document.querySelectorAll('[id^="replyForm-"]').forEach(form => {
             alert(data.message);
             if(data.success) location.reload();
         });
+    });
+});
+</script>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-[100] hidden">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white rounded-[2.5rem] w-full max-w-md overflow-hidden shadow-2xl animate-slide-up">
+            <div class="p-10 text-center">
+                <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <h3 class="text-2xl font-black text-gray-800 mb-3 uppercase tracking-tight">Delete this ad?</h3>
+                <p class="text-gray-500 font-medium mb-8">This action cannot be undone. All data related to this listing will be permanently removed.</p>
+                
+                <div id="boostedWarning" class="hidden mb-8 bg-orange-50 border-2 border-orange-100 p-6 rounded-3xl text-left">
+                    <div class="flex gap-4">
+                        <div class="w-10 h-10 bg-orange-500 text-white rounded-xl flex-shrink-0 flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-black text-orange-800 uppercase tracking-widest mb-1">Boosted Ad Warning</p>
+                            <p class="text-[10px] text-orange-700 font-bold leading-relaxed">This ad is currently boosted. If you delete it, your remaining subscription and promotion days will be <span class="underline">lost forever</span>.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button id="confirmDeleteBtn" class="w-full bg-red-600 text-white py-4 rounded-2xl font-black text-xs uppercase tracking-[2px] hover:bg-red-700 transition shadow-xl shadow-red-100">Yes, Delete Forever</button>
+                    <button onclick="closeDeleteModal()" class="w-full py-4 text-gray-400 font-black text-xs uppercase tracking-[2px] hover:text-gray-600 transition">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let adToDelete = null;
+
+function confirmDelete(adId, isBoosted) {
+    adToDelete = adId;
+    const modal = document.getElementById('deleteModal');
+    const warning = document.getElementById('boostedWarning');
+    
+    if (isBoosted) {
+        warning.classList.remove('hidden');
+    } else {
+        warning.classList.add('hidden');
+    }
+    
+    modal.classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    adToDelete = null;
+}
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+    if (!adToDelete) return;
+    
+    const btn = this;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> DELETING...';
+    
+    const formData = new FormData();
+    formData.append('ad_id', adToDelete);
+    
+    fetch('/api/delete_ad.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.message);
+            btn.disabled = false;
+            btn.innerHTML = 'Yes, Delete Forever';
+        }
+    })
+    .catch(err => {
+        alert('An error occurred. Please try again.');
+        btn.disabled = false;
+        btn.innerHTML = 'Yes, Delete Forever';
     });
 });
 </script>

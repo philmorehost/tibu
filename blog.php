@@ -1,5 +1,7 @@
 <?php
-require_once __DIR__ . '/config/config.php'`r`nif (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/config/config.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
+
 require_once __DIR__ . '/inc/functions.php';
 
 $stmt = $pdo->query("SELECT * FROM blog_posts ORDER BY created_at DESC");
