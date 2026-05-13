@@ -376,6 +376,12 @@ $missing_tables = [
         has_pro_sales TINYINT(1) DEFAULT 0,
         has_email_promo TINYINT(1) DEFAULT 0,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS sessions (
+        id VARCHAR(128) NOT NULL PRIMARY KEY,
+        data TEXT NOT NULL,
+        last_access INT NOT NULL,
+        INDEX (last_access)
     )"
 ];
 

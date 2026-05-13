@@ -8,7 +8,7 @@
         <?php endif; ?>
         <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
         <div class="relative h-40 md:h-48 overflow-hidden fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
-            <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
+            <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700" loading="lazy">
             <?php if ($tier_info): ?>
                 <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
             <?php endif; ?>

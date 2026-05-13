@@ -251,7 +251,7 @@ window.addEventListener('load', () => {
                         <?php endif; ?>
                         <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
                         <div class="relative h-40 fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
-                            <img src="<?php echo $ad_img; ?>">
+                            <img src="<?php echo $ad_img; ?>" loading="lazy">
                             <span class="absolute top-2 left-2 <?php echo $tier_info['badge'] ?? 'bg-yellow-500'; ?> text-white text-[10px] font-bold px-2 py-0.5 rounded-full uppercase z-10"><?php echo $tier_info['label'] ?? 'Featured'; ?></span>
                             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
                                 <span class="absolute top-2 right-2 bg-blue-600 text-white text-[8px] font-black px-2 py-0.5 rounded-full uppercase shadow-sm z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</span>
@@ -346,7 +346,7 @@ window.addEventListener('load', () => {
                         <?php endif; ?>
                         <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
                         <div class="relative h-48 fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
-                            <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
+                            <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700" loading="lazy">
                             <?php if ($ad['listing_type'] !== 'for_sale'): ?>
                                 <span class="absolute top-4 right-4 bg-blue-600 text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><i class="fas fa-sync-alt mr-1"></i> Swap/Barter</span>
                             <?php endif; ?>
@@ -420,7 +420,7 @@ window.addEventListener('load', () => {
                         <?php endif; ?>
                         <?php $ad_img = $ad['image'] ? '/uploads/ads/'.$ad['image'] : 'https://placehold.co/400x300?text=No+Image'; ?>
                         <div class="h-64 overflow-hidden relative fit-to-frame" style="--bg-image: url('<?php echo $ad_img; ?>')">
-                            <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700">
+                            <img src="<?php echo $ad_img; ?>" class="group-hover:scale-110 transition duration-700" loading="lazy">
                             <?php if ($tier_info): ?>
                                 <div class="absolute top-4 left-4 <?php echo $tier_info['badge']; ?> text-white text-[8px] font-black px-3 py-1 rounded-full uppercase shadow-xl z-10"><?php echo $tier_info['label']; ?></div>
                             <?php endif; ?>

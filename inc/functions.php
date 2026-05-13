@@ -6,8 +6,7 @@
 // Check if schema needs update (migration logic)
 if (file_exists(__DIR__ . '/../config/config.php')) {
     require_once __DIR__ . '/update_schema.php';
-}
-
+require_once __DIR__ . '/sessions.php';
 require_once __DIR__ . '/marketing.php';
 
 // Initialize project directories
@@ -25,16 +24,23 @@ foreach ($required_dirs as $dir) {
     }
 }
 
-// Global Site Settings
+// Global Site Settings (Optimized with File Cache)
 $settings = [];
 if (isset($pdo)) {
-    try {
-        $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
-        while ($row = $stmt->fetch()) {
-            $settings[$row['setting_key']] = $row['setting_value'];
+    $cache_file = __DIR__ . '/../config/settings_cache.php';
+    if (file_exists($cache_file) && (time() - filemtime($cache_file) < 3600)) {
+        $settings = include $cache_file;
+    } else {
+        try {
+            $stmt = $pdo->query("SELECT setting_key, setting_value FROM settings");
+            while ($row = $stmt->fetch()) {
+                $settings[$row['setting_key']] = $row['setting_value'];
+            }
+            // Save to cache
+            file_put_contents($cache_file, '<?php return ' . var_export($settings, true) . ';');
+        } catch (Exception $e) {
+            // Fallback or log error
         }
-    } catch (Exception $e) {
-        // Fallback or log error
     }
 }
 
@@ -153,12 +159,18 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
         }
     }
 
-    $filename = md5(uniqid(rand(), true)) . ".jpg";
-    $target_file = $target_dir . "/" . $filename;
-
     $new_width = (int)min($width, $max_width);
     $new_height = (int)(($height / $width) * $new_width);
     $tmp = imagecreatetruecolor($new_width, $new_height);
+    
+    // Maintain transparency for PNGs and WebPs
+    if ($type == IMAGETYPE_PNG || $type == IMAGETYPE_WEBP) {
+        imagealphablending($tmp, false);
+        imagesavealpha($tmp, true);
+        $transparent = imagecolorallocatealpha($tmp, 255, 255, 255, 127);
+        imagefilledrectangle($tmp, 0, 0, $new_width, $new_height, $transparent);
+    }
+
     imagecopyresampled($tmp, $src, 0, 0, 0, 0, $new_width, $new_height, $width, $height);
 
     // Apply Watermark to the resized image for better quality
@@ -166,7 +178,25 @@ function process_image_upload($file_tmp, $target_dir, $max_width = 800, $user_id
         apply_site_watermark($tmp, $seller_info);
     }
 
-    imagejpeg($tmp, $target_file, 85);
+    // Adaptive Compression: Convert to WebP for smallest size
+    $filename = md5(uniqid(rand(), true)) . ".webp";
+    $target_file = $target_dir . "/" . $filename;
+    
+    // Check if WebP is supported, fallback to JPG if not
+    if (function_exists('imagewebp')) {
+        // High resolution but optimized: Quality 80 is usually the sweet spot for WebP
+        imagewebp($tmp, $target_file, 80);
+        
+        // If file is still too large (> 300KB), reduce quality slightly
+        if (filesize($target_file) > 300 * 1024) {
+            imagewebp($tmp, $target_file, 65);
+        }
+    } else {
+        $filename = str_replace('.webp', '.jpg', $filename);
+        $target_file = $target_dir . "/" . $filename;
+        imageinterlace($tmp, 1); // Progressive JPEG for better perceived speed
+        imagejpeg($tmp, $target_file, 85);
+    }
 
     // Save hash
     if ($pdo && $ad_id) {
