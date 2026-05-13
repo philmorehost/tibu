@@ -37,7 +37,7 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
         return $stmt->execute([$id]);
     }
 
-    public function gc($maxlifetime): int|false {
+    public function gc($maxlifetime) {
         $old = time() - $maxlifetime;
         $stmt = $this->pdo->prepare("DELETE FROM sessions WHERE last_access < ?");
         $stmt->execute([$old]);
@@ -51,14 +51,18 @@ if (isset($pdo)) {
     session_set_save_handler($handler, true);
     // Implement persistent sessions: set lifetime to 30 days
     ini_set('session.gc_maxlifetime', 2592000);
-    session_set_cookie_params([
-        'lifetime' => 2592000,
-        'path' => '/',
-        'domain' => '',
-        'secure' => isset($_SERVER['HTTPS']),
-        'httponly' => true,
-        'samesite' => 'Lax'
-    ]);
+    if (version_compare(PHP_VERSION, '7.3.0', '>=')) {
+        session_set_cookie_params([
+            'lifetime' => 2592000,
+            'path' => '/',
+            'domain' => '',
+            'secure' => isset($_SERVER['HTTPS']),
+            'httponly' => true,
+            'samesite' => 'Lax'
+        ]);
+    } else {
+        session_set_cookie_params(2592000, '/; samesite=Lax', '', isset($_SERVER['HTTPS']), true);
+    }
 
     if (session_status() === PHP_SESSION_NONE) {
         session_start();

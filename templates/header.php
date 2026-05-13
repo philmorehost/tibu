@@ -188,11 +188,11 @@ if (isset($pdo)) {
                         <span class="hidden md:inline">SWAP</span>
                     </a>
                 <?php else: ?>
-                    <a href="/login" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
+                    <a href="/login.php" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
                         <i class="fas fa-sign-in-alt text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">Sign In</span>
                     </a>
-                    <a href="/register" class="text-primary-600 font-bold md:border-2 md:border-primary-600 p-2 md:px-4 md:py-1 rounded-lg hover:bg-primary-600 hover:text-white transition flex items-center justify-center">
+                    <a href="/register.php" class="text-primary-600 font-bold md:border-2 md:border-primary-600 p-2 md:px-4 md:py-1 rounded-lg hover:bg-primary-600 hover:text-white transition flex items-center justify-center">
                         <i class="fas fa-user-plus text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">Registration</span>
                     </a>
