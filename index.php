@@ -101,7 +101,7 @@ window.addEventListener('load', () => {
 <div class="container mx-auto px-4 py-8">
     <!-- <?php echo h($settings['site_name'] ?? 'Classifieds'); ?>-Style Search Bar (Mobile Only) -->
     <div class="mb-8 md:hidden">
-        <form action="/search.php" method="GET" class="flex flex-col md:flex-row items-stretch bg-white rounded-2xl md:rounded-full overflow-hidden shadow-xl border-2 border-primary-50 focus-within:border-primary-500 transition-all">
+        <form action="/search" method="GET" class="flex flex-col md:flex-row items-stretch bg-white rounded-2xl md:rounded-full overflow-hidden shadow-xl border-2 border-primary-50 focus-within:border-primary-500 transition-all">
             <div class="flex flex-1 items-center px-6 border-b md:border-b-0 md:border-r border-gray-100 gap-3">
                 <i class="fas fa-search text-gray-400"></i>
                 <input type="text" name="q" placeholder="What are you looking for?" class="w-full py-4 md:py-5 text-sm font-bold text-gray-700 outline-none" required>
@@ -239,7 +239,7 @@ window.addEventListener('load', () => {
                         <div class="w-2 h-8 bg-yellow-400 rounded-full"></div>
                         <h3 class="text-xl md:text-2xl font-black text-gray-800 uppercase tracking-tighter">Premium Boosted</h3>
                     </div>
-                    <a href="/search.php" class="text-[10px] md:text-xs font-black text-primary-600 uppercase tracking-widest hover:text-primary-700 transition">View All Listings</a>
+                    <a href="/search" class="text-[10px] md:text-xs font-black text-primary-600 uppercase tracking-widest hover:text-primary-700 transition">View All Listings</a>
                 </div>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <?php foreach ($featured_ads as $ad):

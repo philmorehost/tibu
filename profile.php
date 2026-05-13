@@ -204,15 +204,15 @@ include __DIR__ . '/templates/header.php';
 
                         <div class="flex gap-2">
                         <?php if (($ad['ad_tier'] ?? 'free') === 'free' && $ad['status'] == 'active'): ?>
-                            <a href="/boost.php?ad_id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-primary-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition uppercase shadow-md tracking-wider">
+                            <a href="/boost?ad_id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-primary-600 text-white py-2 rounded-lg text-xs font-bold hover:bg-primary-700 transition uppercase shadow-md tracking-wider">
                                 <?php echo ($ad['last_payment_status'] == 'failed') ? 'Retry Boost' : 'Boost Ad'; ?>
                             </a>
                         <?php endif; ?>
                         <div class="flex gap-2">
                         <?php if ($ad['status'] != 'sold' && $ad['status'] != 'expired'): ?>
-                            <a href="edit-ad.php?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-yellow-500 text-white py-2 rounded-lg text-[10px] font-bold hover:bg-yellow-600 transition uppercase shadow-md tracking-wider">Edit</a>
+                            <a href="/edit-ad?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-yellow-500 text-white py-2 rounded-lg text-[10px] font-bold hover:bg-yellow-600 transition uppercase shadow-md tracking-wider">Edit</a>
                         <?php else: ?>
-                            <a href="api/republish.php?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-blue-600 text-white py-2 rounded-lg text-[10px] font-bold hover:bg-blue-700 transition uppercase shadow-md tracking-wider">Republish</a>
+                            <a href="/api/republish?id=<?php echo $ad['id']; ?>" class="flex-1 text-center bg-blue-600 text-white py-2 rounded-lg text-[10px] font-bold hover:bg-blue-700 transition uppercase shadow-md tracking-wider">Republish</a>
                         <?php endif; ?>
                         <a href="<?php echo generate_ad_url($ad); ?>" class="flex-1 text-center bg-gray-100 text-gray-600 py-2 rounded-lg text-[10px] font-bold hover:bg-gray-200 transition uppercase tracking-wider border border-gray-200">View</a>
                         <button onclick="confirmDelete(<?php echo $ad['id']; ?>, <?php echo ($ad['ad_tier'] != 'free' && $ad['ad_tier'] !== null ? 'true' : 'false'); ?>)" class="flex-1 text-center bg-red-50 text-red-600 py-2 rounded-lg text-[10px] font-bold hover:bg-red-600 hover:text-white transition uppercase shadow-sm tracking-wider border border-red-100">Delete</button>

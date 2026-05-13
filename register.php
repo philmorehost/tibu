@@ -6,7 +6,7 @@ require_once __DIR__ . '/inc/security.php';
 require_once __DIR__ . '/inc/user_auth.php';
 
 if (isset($_SESSION['user_id'])) {
-    header('Location: index.php');
+    header('Location: /');
     exit;
 }
 
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     $_SESSION['user_id'] = $pdo->lastInsertId();
                     $_SESSION['user_name'] = $full_name;
-                    header('Location: index.php');
+                    header('Location: /');
                     exit;
                 }
             }
@@ -90,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $pdo->lastInsertId();
             $_SESSION['user_name'] = $reg['full_name'];
             unset($_SESSION['reg_data']);
-            header('Location: index.php');
+            header('Location: /');
             exit;
         } else {
             $error = "Invalid or expired OTP.";
@@ -188,9 +188,9 @@ include __DIR__ . '/templates/header.php';
                                 const res = JSON.parse(xhr.responseText);
                                 if (res.success) {
                                     if (res.needs_phone) {
-                                        window.location.href = 'profile_edit.php?notice=please_add_phone';
+                                        window.location.href = '/profile_edit?notice=please_add_phone';
                                     } else {
-                                        window.location.href = 'index.php';
+                                        window.location.href = '/';
                                     }
                                 } else {
                                     alert(res.message || 'Login failed');

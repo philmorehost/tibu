@@ -5,7 +5,7 @@ require_once __DIR__ . '/inc/functions.php';
 require_once __DIR__ . '/inc/security.php';
 
 if (isset($_SESSION['user_id'])) {
-    header('Location: index.php');
+    header('Location: /');
     exit;
 }
 
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_name'] = $user['full_name'];
 
-            $redirect = $_SESSION['redirect_after_login'] ?? 'index.php';
+            $redirect = $_SESSION['redirect_after_login'] ?? '/';
             unset($_SESSION['redirect_after_login']);
             header("Location: $redirect");
             exit;
@@ -99,13 +99,13 @@ include __DIR__ . '/templates/header.php';
                                 const res = JSON.parse(xhr.responseText);
                                 if (res.success) {
                                     if (res.needs_phone) {
-                                        window.location.href = 'profile_edit.php?notice=please_add_phone';
+                                        window.location.href = '/profile_edit?notice=please_add_phone';
                                     } else {
                                         // Retrieve redirect URL from PHP session (cookie) or fallback
                                         <?php if(isset($_SESSION['redirect_after_login'])): ?>
                                             window.location.href = '<?php echo $_SESSION['redirect_after_login']; ?>';
                                         <?php else: ?>
-                                            window.location.href = 'index.php';
+                                            window.location.href = '/';
                                         <?php endif; ?>
                                     }
                                 } else {

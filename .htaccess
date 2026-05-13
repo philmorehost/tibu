@@ -19,7 +19,15 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^([^/]+)/([^/]+)/([a-zA-Z0-9-]+)-([0-9]+)/?$ ad.php?id=$4 [L,QSA]
 
-# Hide .php extension (Catch-all for other pages)
+# 1. Redirect /index.php to /
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
+RewriteRule ^index\.php$ / [R=301,L]
+
+# 2. Redirect /somepage.php to /somepage
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /([^\ ]+)\.php\ HTTP/
+RewriteRule ^(.+)\.php$ /$1 [R=301,L]
+
+# 3. Internally rewrite /somepage to /somepage.php
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME}\.php -f
 RewriteRule ^([^\.]+)$ $1.php [NC,L]

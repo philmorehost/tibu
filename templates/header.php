@@ -170,7 +170,7 @@ if (isset($pdo)) {
             </div>
 
             <div class="flex items-center space-x-2 md:space-x-4">
-                <a href="/packages.php" class="text-purple-600 hover:text-purple-700 font-bold flex flex-col items-center">
+                <a href="/packages" class="text-purple-600 hover:text-purple-700 font-bold flex flex-col items-center">
                     <i class="fas fa-gem text-xl md:text-base md:mr-1"></i>
                     <span class="hidden md:inline">Packages</span>
                 </a>
@@ -188,15 +188,15 @@ if (isset($pdo)) {
                         <span class="hidden md:inline">SWAP</span>
                     </a>
                 <?php else: ?>
-                    <a href="/login.php" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
+                    <a href="/login" class="text-gray-600 hover:text-primary-600 font-bold flex flex-col items-center">
                         <i class="fas fa-sign-in-alt text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">Sign In</span>
                     </a>
-                    <a href="/register.php" class="text-primary-600 font-bold md:border-2 md:border-primary-600 p-2 md:px-4 md:py-1 rounded-lg hover:bg-primary-600 hover:text-white transition flex items-center justify-center">
+                    <a href="/register" class="text-primary-600 font-bold md:border-2 md:border-primary-600 p-2 md:px-4 md:py-1 rounded-lg hover:bg-primary-600 hover:text-white transition flex items-center justify-center">
                         <i class="fas fa-user-plus text-xl md:text-base md:mr-1"></i>
                         <span class="hidden md:inline">Registration</span>
                     </a>
-                    <a href="/search.php?type=swap" class="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition items-center justify-center">
+                    <a href="/search?type=swap" class="hidden md:flex bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition items-center justify-center">
                         <i class="fas fa-sync-alt md:mr-1"></i>
                         <span class="hidden md:inline">SWAP</span>
                     </a>
@@ -204,7 +204,7 @@ if (isset($pdo)) {
                     <a href="/post-ad" class="md:hidden text-yellow-500 p-2 flex flex-col items-center">
                         <i class="fas fa-plus-circle text-2xl"></i>
                     </a>
-                    <a href="/search.php?type=swap" class="md:hidden text-blue-600 p-2 flex flex-col items-center">
+                    <a href="/search?type=swap" class="md:hidden text-blue-600 p-2 flex flex-col items-center">
                         <i class="fas fa-sync-alt text-2xl"></i>
                     </a>
                 <?php endif; ?>

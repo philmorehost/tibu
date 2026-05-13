@@ -5,7 +5,7 @@ require_once __DIR__ . '/inc/functions.php';
 require_once __DIR__ . '/inc/user_auth.php';
 
 if (!isset($_GET['id'])) {
-    redirect('index.php');
+    redirect('/');
 }
 
 $id = (int)$_GET['id'];
@@ -20,7 +20,7 @@ $stmt->execute([$id]);
 $ad = $stmt->fetch();
 
 if (!$ad || ($ad['status'] !== 'active' && (!isset($_SESSION['user_id']) || $_SESSION['user_id'] != $ad['user_id']) && !isset($_SESSION['admin_id']))) {
-    redirect('index.php', 'Ad not found or pending moderation.');
+    redirect('/', 'Ad not found or pending moderation.');
 }
 
 // Log view for analytics (Feature 07)
@@ -299,11 +299,11 @@ include __DIR__ . '/templates/header.php';
                     </div>
 
                     <?php if (is_user_logged_in() && $_SESSION['user_id'] != $ad['user_id']): ?>
-                        <a href="/chat.php?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-700 transition shadow-xl shadow-primary-100 flex items-center justify-center gap-3 active:scale-95">
+                        <a href="/chat?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-primary-700 transition shadow-xl shadow-primary-100 flex items-center justify-center gap-3 active:scale-95">
                             <i class="fas fa-comment-dots"></i> START CHAT
                         </a>
                         <?php if ($ad['listing_type'] != 'for_sale'): ?>
-                            <a href="/swap_propose.php?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95">
+                            <a href="/swap_propose?ad_id=<?php echo $ad['id']; ?>" class="w-full bg-blue-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95">
                                 <i class="fas fa-exchange-alt"></i> PROPOSE A SWAP
                             </a>
                         <?php endif; ?>
@@ -470,7 +470,7 @@ include __DIR__ . '/templates/header.php';
                         return;
                     }
                     container.innerHTML = matches.map(m => `
-                        <a href="/ad.php?id=${m.id}" class="flex items-center gap-4 p-2 rounded-2xl hover:bg-blue-50 transition group">
+                        <a href="/${m.location}/${m.category}/${m.slug}-${m.id}" class="flex items-center gap-4 p-2 rounded-2xl hover:bg-blue-50 transition group">
                             <img src="/uploads/ads/${m.image || "placeholder.jpg"}" class="w-16 h-16 object-cover rounded-xl shadow-sm">
                             <div class="flex-1">
                                 <h4 class="text-xs font-black text-gray-800 line-clamp-1 group-hover:text-blue-600">${m.title}</h4>
@@ -549,7 +549,7 @@ include __DIR__ . '/templates/header.php';
         <p class="text-sm text-gray-500 font-bold text-center mb-8">Buyers who chat on <?php echo h($settings['site_name'] ?? 'Classifieds'); ?> before paying have full dispute support. Use our message feature to keep a record of your deal.</p>
 
         <div class="space-y-4">
-            <a href="/chat.php?ad_id=<?php echo $ad["id"]; ?>" class="block w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest text-center hover:bg-primary-700 transition shadow-xl">Message on <?php echo h($settings['site_name'] ?? 'Classifieds'); ?></a>
+            <a href="/chat?ad_id=<?php echo $ad["id"]; ?>" class="block w-full bg-primary-600 text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest text-center hover:bg-primary-700 transition shadow-xl">Message on <?php echo h($settings['site_name'] ?? 'Classifieds'); ?></a>
             <div id="revealedPhoneContainer" class="hidden">
                 <a href="tel:<?php echo str_replace(' ', '', $ad['seller_phone'] ?? ''); ?>" id="revealedPhoneLink" class="block w-full bg-green-500 text-white py-5 rounded-2xl font-black text-lg text-center hover:bg-green-600 transition shadow-xl mb-4">
                     <i class="fas fa-phone-alt mr-2"></i> <span id="revealedPhoneNumber"></span>
