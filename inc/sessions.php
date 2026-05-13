@@ -49,6 +49,17 @@ class DatabaseSessionHandler implements SessionHandlerInterface {
 if (isset($pdo)) {
     $handler = new DatabaseSessionHandler($pdo);
     session_set_save_handler($handler, true);
+    // Implement persistent sessions: set lifetime to 30 days
+    ini_set('session.gc_maxlifetime', 2592000);
+    session_set_cookie_params([
+        'lifetime' => 2592000,
+        'path' => '/',
+        'domain' => '',
+        'secure' => isset($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+
     if (session_status() === PHP_SESSION_NONE) {
         session_start();
     }

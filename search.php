@@ -1,6 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/config/config.php';
+if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/inc/functions.php';
 require_once __DIR__ . '/inc/user_auth.php';
 
@@ -436,3 +436,4 @@ document.addEventListener('DOMContentLoaded', () => loadFilters(<?php echo $cat_
 </script>
 
 <?php include __DIR__ . '/templates/footer.php'; ?>
+

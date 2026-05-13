@@ -5,8 +5,9 @@
 
 // Check if schema needs update (migration logic)
 if (file_exists(__DIR__ . '/../config/config.php')) {
-    require_once __DIR__ . '/update_schema.php';
+    require_once __DIR__ . '/../config/config.php';
     require_once __DIR__ . '/sessions.php';
+    require_once __DIR__ . '/update_schema.php';
 }
 require_once __DIR__ . '/marketing.php';
 

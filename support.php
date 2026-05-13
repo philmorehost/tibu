@@ -1,6 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/config.php'`r`nif (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/inc/functions.php';
 require_once __DIR__ . '/inc/user_auth.php';
 require_user();
@@ -122,3 +121,4 @@ include __DIR__ . '/templates/header.php';
 </script>
 
 <?php include __DIR__ . '/templates/footer.php'; ?>
+

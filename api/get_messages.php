@@ -1,6 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/config.php'`r`nif (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../inc/functions.php';
 require_once __DIR__ . '/../inc/user_auth.php';
 
@@ -51,3 +50,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
+

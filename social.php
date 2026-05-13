@@ -3,8 +3,7 @@
  * Jiji-Inspired-1.0 Social Login Handler (OAuth)
  */
 
-if (session_status() === PHP_SESSION_NONE) session_start();
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/config.php'`r`nif (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/inc/functions.php';
 
 $provider = $_GET['provider'] ?? '';
@@ -31,3 +30,4 @@ if (empty($client_id)) {
 
 // Indicate that real OAuth logic should be implemented.
 redirect('login.php', "OAuth logic for " . ucfirst($provider) . " must be implemented using official SDKs.", 'error');
+

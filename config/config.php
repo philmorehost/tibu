@@ -20,3 +20,6 @@ try {
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
+
+// Scaling: Load Database Session Handler
+require_once __DIR__ . '/../inc/sessions.php';

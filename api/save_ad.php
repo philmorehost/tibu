@@ -1,6 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/config.php'`r`nif (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../inc/functions.php';
 require_once __DIR__ . '/../inc/user_auth.php';
 
@@ -36,3 +35,4 @@ $count = $pdo->prepare("SELECT COUNT(*) FROM saved_ads WHERE user_id = ?");
 $count->execute([$user_id]);
 
 echo json_encode(['success' => true, 'saved' => $saved, 'count' => $count->fetchColumn()]);
+

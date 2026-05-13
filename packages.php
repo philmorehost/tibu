@@ -1,6 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/config.php'`r`nif (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/inc/functions.php';
 
 $packages = $pdo->query("SELECT * FROM packages ORDER BY price ASC")->fetchAll();
@@ -103,3 +102,4 @@ include __DIR__ . '/templates/header.php';
 </div>
 
 <?php include __DIR__ . '/templates/footer.php'; ?>
+

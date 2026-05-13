@@ -1,6 +1,5 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/config.php'`r`nif (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../inc/functions.php';
 
 header('Content-Type: application/json');
@@ -67,3 +66,4 @@ $_SESSION['user_id'] = $user['id'];
 $_SESSION['user_name'] = $user['full_name'];
 
 echo json_encode(['success' => true, 'needs_phone' => $needs_phone]);
+
