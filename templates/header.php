@@ -1,3 +1,4 @@
+<?php
 require_once __DIR__ . '/../inc/functions.php';
 require_once __DIR__ . '/../inc/user_auth.php';
 
