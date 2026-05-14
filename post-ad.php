@@ -321,7 +321,7 @@ function loadSubcategories(parentId) {
     filterContainer.innerHTML = '';
     if (!parentId) { subSelect.innerHTML = '<option value="">Select Subcategory</option>'; return; }
     subSelect.innerHTML = '<option value="">Loading...</option>';
-    fetch('api/subcategories.php?parent_id=' + parentId)
+    fetch('api/subcategories?parent_id=' + parentId)
         .then(response => response.json())
         .then(data => {
             subSelect.innerHTML = '<option value="">Select Subcategory</option>';
@@ -346,7 +346,7 @@ function loadFilters(catId) {
         propDecl.classList.add("hidden");
     }
 
-    fetch('api/filters.php?cat_id=' + catId)
+    fetch('api/filters?cat_id=' + catId)
         .then(response => response.json())
         .then(filters => {
             let html = '';
@@ -392,7 +392,7 @@ function loadLGAs(stateId) {
     const lgaSelect = document.getElementById('lga_id');
     lgaSelect.innerHTML = '<option value="">Loading...</option>';
     if (!stateId) { lgaSelect.innerHTML = '<option value="">Select LGA</option>'; return; }
-    fetch('api/lgas.php?state_id=' + stateId)
+    fetch('api/lgas?state_id=' + stateId)
         .then(response => response.json())
         .then(data => {
             lgaSelect.innerHTML = '<option value="">Select LGA</option>';

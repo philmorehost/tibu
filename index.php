@@ -470,7 +470,7 @@ function showMobileSubs(parentId, parentName) {
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
 
-    fetch(`api/subcategories.php?parent_id=${parentId}`)
+    fetch(`api/subcategories?parent_id=${parentId}`)
         .then(res => res.json())
         .then(data => {
             if(data.length === 0) {
@@ -514,7 +514,7 @@ function selectMainTrending(catId, name, icon) {
     const backBtn = document.getElementById('backToMainCats');
 
     // Fetch subs
-    fetch(`api/subcategories.php?parent_id=${catId}`)
+    fetch(`api/subcategories?parent_id=${catId}`)
         .then(res => res.json())
         .then(subs => {
             if (subs.length === 0) {
@@ -564,7 +564,7 @@ function filterTrending(catId, type = 'all') {
     const container = document.getElementById('trendingContainer');
     container.innerHTML = '<div class="col-span-full py-20 text-center"><i class="fas fa-spinner fa-spin text-3xl text-primary-500"></i></div>';
 
-    fetch(`api/trending.php?cat_id=${catId}&type=${type}`)
+    fetch(`api/trending?cat_id=${catId}&type=${type}`)
         .then(res => res.json())
         .then(data => {
             if(data.length === 0) {

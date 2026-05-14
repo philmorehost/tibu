@@ -402,7 +402,7 @@ include __DIR__ . '/templates/header.php';
             formData.append('receiver_id', receiverId);
             formData.append('message', message);
 
-            fetch('/api/send_message.php', {
+            fetch('/api/send_message', {
                 method: 'POST',
                 body: formData
             })
@@ -441,7 +441,7 @@ include __DIR__ . '/templates/header.php';
     // Polling for new messages
     if (adId > 0) {
         setInterval(() => {
-            fetch(`/api/get_messages.php?ad_id=${adId}&partner_id=${receiverId}&last_id=${lastMsgId}`)
+            fetch(`/api/get_messages?ad_id=${adId}&partner_id=${receiverId}&last_id=${lastMsgId}`)
             .then(res => res.json())
             .then(res => {
                 if (res.success && res.messages.length > 0) {

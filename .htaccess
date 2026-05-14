@@ -23,7 +23,8 @@ RewriteRule ^([^/]+)/([^/]+)/([a-zA-Z0-9-]+)-([0-9]+)/?$ ad.php?id=$4 [L,QSA]
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /index\.php\ HTTP/
 RewriteRule ^index\.php$ / [R=301,L]
 
-# 2. Redirect /somepage.php to /somepage
+# 2. Redirect /somepage.php to /somepage (excluding POST requests)
+RewriteCond %{REQUEST_METHOD} !POST
 RewriteCond %{THE_REQUEST} ^[A-Z]{3,9}\ /([^\ ]+)\.php\ HTTP/
 RewriteRule ^(.+)\.php$ /$1 [R=301,L]
 

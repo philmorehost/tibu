@@ -180,7 +180,7 @@ include __DIR__ . '/templates/header.php';
                 <script>
                 function handleGoogleCredentialResponse(response) {
                     const xhr = new XMLHttpRequest();
-                    xhr.open('POST', 'api/google_verify.php');
+                    xhr.open('POST', 'api/google_verify');
                     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                     xhr.onload = function() {
                         if (xhr.status === 200) {

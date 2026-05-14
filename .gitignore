@@ -1,0 +1,9 @@
+/uploads/*
+!/uploads/.gitkeep
+/assets/uploads/*
+*.log
+.DS_Store
+Thumbs.db
+config/config.php
+node_modules/
+.env

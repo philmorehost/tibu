@@ -389,7 +389,7 @@ function loadFilters(catId) {
         return;
     }
 
-    fetch('/api/filters.php?cat_id=' + catId)
+    fetch('/api/filters?cat_id=' + catId)
         .then(response => response.json())
         .then(filters => {
             let html = '';
@@ -628,7 +628,7 @@ function loadLGAs(stateId) {
         return;
     }
 
-    fetch('/api/lgas.php?state_id=' + stateId)
+    fetch('/api/lgas?state_id=' + stateId)
         .then(response => response.json())
         .then(data => {
             lgaContainer.classList.remove('hidden');
@@ -714,7 +714,7 @@ function updateAds() {
     params.append('cat_id', currentCategoryId);
     params.set('type', currentType);
 
-    fetch(`/api/filter_ads.php?${params.toString()}`)
+    fetch(`/api/filter_ads?${params.toString()}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {

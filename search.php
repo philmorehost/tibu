@@ -237,7 +237,7 @@ function updateAds() {
     // cat_id is already in the form hidden input, but ensuring it matches JS state
     params.set('cat_id', currentCategoryId);
 
-    fetch(`/api/filter_ads.php?${params.toString()}`)
+    fetch(`/api/filter_ads?${params.toString()}`)
         .then(res => res.json())
         .then(data => {
             if (data.success) {
@@ -313,7 +313,7 @@ function renderAds(ads) {
 }
 
 function toggleSave(adId, btn) {
-    fetch('/api/save_ad.php?ad_id=' + adId)
+    fetch('/api/save_ad?ad_id=' + adId)
         .then(res => res.json())
         .then(data => {
             if (!data.success) {
@@ -348,7 +348,7 @@ function loadFilters(catId) {
         return;
     }
 
-    fetch('api/filters.php?cat_id=' + catId)
+    fetch('api/filters?cat_id=' + catId)
         .then(response => response.json())
         .then(filters => {
             let html = '';
@@ -415,7 +415,7 @@ function loadLGAs(stateId) {
         return;
     }
 
-    fetch('/api/lgas.php?state_id=' + stateId)
+    fetch('/api/lgas?state_id=' + stateId)
         .then(response => response.json())
         .then(data => {
             lgaContainer.classList.remove('hidden');
